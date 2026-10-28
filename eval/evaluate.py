@@ -11,6 +11,7 @@ same search path as the app: query planner + synonyms, top-k = PLANNED_TOP_K
 when the planner made 2+ queries.
 
 Retrieval check: did a document from `expected_docs` appear in the top-k passages?
+                 ('ann_*' = any announcement: a trailing * matches a doc_id prefix)
 Answer check:    does the answer contain every `must_include` item?
                  ('a|b' means either a or b is enough; case-insensitive)
 Writes its own section of eval/report.md (the other mode's section is kept)
@@ -47,6 +48,10 @@ def contains_all(answer, items):
     return not missing, missing
 
 
+def expected(doc_id, docs):
+    return any(doc_id == e or (e.endswith('*') and doc_id.startswith(e[:-1])) for e in docs)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--answers', action='store_true', help='also call the LLM')
@@ -73,7 +78,7 @@ def main():
         k = args.k or s['k']
         hits = r.search(s['main'], k=k, extra_queries=s['extra'])
         got = [h['doc_id'] for h in hits]
-        rank = next((i + 1 for i, d in enumerate(got) if d in q['expected_docs']), None)
+        rank = next((i + 1 for i, d in enumerate(got) if expected(d, q['expected_docs'])), None)
         res = {'id': q['id'], 'type': q['type'], 'lang': q['lang'], 'question': q['question'],
                'retrieved': got, 'retrieval_hit': rank is not None if q['expected_docs'] else None,
                'rank': rank, 'k': k, 'search': s['search'], 'planner': s['planner']}
