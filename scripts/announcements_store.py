@@ -86,13 +86,16 @@ def date_label(published_at, date_source):
 
 
 def build_chunks(ann, text):
-    """Chunk dicts (without ids) for one post. `text` is the full post text, or
-    the search snippet for a link-only entry."""
+    """Chunk dicts (without ids) for one post. `text` is the full post text, the
+    search snippet of a link-only entry, or empty (a post known only from the
+    announcements listing). Only provisional search entries (not listed, no
+    full text) say "(link only)" in their header."""
     doc_id = doc_id_for(ann['url'])
     full = ann['full_text']
-    head = 'Announcement' if full else 'Announcement (link only)'
+    provisional = not full and not ann.get('listed')
+    head = 'Announcement (link only)' if provisional else 'Announcement'
     header = f"{head}: {ann['title']} | Published: {date_label(ann['published_at'], ann['date_source'])}"
-    text = (text or '').strip() or ann['title']
+    text = (text or '').strip()
     pieces = chunk_doc({'doc_id': doc_id}, text) if full else [([], text)]
     out = []
     for i, (path, part) in enumerate(pieces):
@@ -106,15 +109,16 @@ def build_chunks(ann, text):
             'source_type': ann['source'], 'url': normalize_url(ann['url']),
             'source': normalize_url(ann['url']), 'approved_on': '',
             'effective_date': ann['published_at'].isoformat() if ann['published_at'] else '',
-            'superseded_by': [], 'file': '', 'chunk_index': i, 'words': wc(part),
-            'text': part, 'context_text': header + '\n\n' + part,
+            'superseded_by': [], 'file': '', 'chunk_index': i, 'words': wc(part or ann['title']),
+            'text': part or ann['title'], 'context_text': header + ('\n\n' + part if part else ''),
             'origin': ann['source'], 'published_at': ann['published_at'],
         })
     return out
 
 
 def content_hash(ann, text):
-    key = [ann['title'], str(ann['published_at']), ann['date_source'], ann['full_text'], text]
+    key = [ann['title'], str(ann['published_at']), ann['date_source'], ann['full_text'],
+           bool(ann.get('listed')), ann.get('rag_priority'), text]
     return hashlib.sha256(json.dumps(key, ensure_ascii=False).encode()).hexdigest()
 
 

@@ -56,10 +56,22 @@ BOILERPLATE = [re.compile(p, re.I) for p in (
 DATE_SOURCE_RANK = {'search': 0, 'snippet': 1, 'title': 2, 'found': 3}
 
 
+def safe_error(e):
+    """Exception text for the (public) Actions log: no hosts, user names, IPs or keys."""
+    msg = (str(e).strip().splitlines() or [''])[0]
+    msg = re.sub(r'tvly-[\w-]+', 'tvly-***', msg)
+    msg = re.sub(r'[\w.-]+\.(?:neon\.tech|aws\.neon\.tech)\b', '<db-host>', msg)
+    msg = re.sub(r'\b(user|database|role)\s+"[^"]*"', r'\1 "***"', msg)
+    msg = re.sub(r'(?<![\d.])\d{1,3}(?:\.\d{1,3}){3}(?![\d.])', '<ip>', msg)
+    msg = re.sub(r'postgres(?:ql)?://\S+', '<database-url>', msg)
+    return f'{type(e).__name__}: {msg[:200]}'
+
+
 def check_url(url):
     """(keep, reason) for a canonical URL (normalize_url: no query string or
     fragment; this sync never fetches URLs, so those are just stripped). Keep
-    only www.bracu.ac.bd posts: a top-level slug or /event/<slug>."""
+    only www.bracu.ac.bd posts at a top-level slug: the announcements listing
+    links to exactly those, so every entry can later be confirmed or removed."""
     p = urlsplit(url.strip())
     if p.netloc.lower() != HOST:
         return False, 'other host'
@@ -71,15 +83,13 @@ def check_url(url):
         return False, 'home page'
     if seg[0].lower() in ('search', 'node'):
         return False, 'search or node page'
-    if len(seg) == 2 and seg[0] == 'event':
-        return True, ''
     if seg[0] == 'news':
         return False, 'news (not an announcement)'
     if len(seg) > 1:
         return False, 'not a top-level post'
     if seg[0].lower() in SECTION_PAGES:
         return False, 'section page'
-    if seg[0].count('-') < 2:
+    if len(re.split(r'[-_]+', seg[0])) < 3:          # posts have 3+ words: fablab-recruitment_circular
         return False, 'not a post slug'
     return True, ''
 
@@ -236,14 +246,14 @@ def main():
         existing = {u for (u,) in conn.execute('SELECT url FROM announcements').fetchall()}
     except Exception as e:
         if not args.dry_run:
-            sys.exit(f'Database unavailable: {type(e).__name__}: {e}')
+            sys.exit(f'Database unavailable: {safe_error(e)}')
         print(f'(dry run without database: {type(e).__name__}; no dedupe against stored posts)')
 
     print(f'Tavily search: {n} searches, time_range={args.time_range}, depth=basic')
     try:
         results, credits = run_searches(key, QUERIES[:n], args.time_range)
     except Exception as e:                 # quota, bad key, network: fail loudly (Actions emails)
-        sys.exit(f'Tavily search failed: {type(e).__name__}: {e}')
+        sys.exit(f'Tavily search failed: {safe_error(e)}')
     log = []
     new, seen_again, skipped = select(results, existing, today, log)
     for kind, a, b in sorted(log):                     # URLs only, never snippets

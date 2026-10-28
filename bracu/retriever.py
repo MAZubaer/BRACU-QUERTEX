@@ -255,7 +255,8 @@ class Retriever:
 
         # "What are the latest notices?": add the newest announcements by date.
         latest = []
-        if wants_latest([query, *queries]):
+        latest_mode = wants_latest([query, *queries])
+        if latest_mode:
             extra_words = 0
             for i, w in self._latest_announcements(today, include_history, config.LATEST_ANNOUNCEMENTS):
                 if i not in chosen and extra_words + w <= LATEST_EXTRA_WORDS:
@@ -265,9 +266,13 @@ class Retriever:
         rows = self._fetch(chosen + latest + ([guide] if guide is not None else []))
         out = [{**rows[i], 'score': round(weighted[i], 5)} for i in chosen if i in rows]
         out.sort(key=lambda c: -c['score'])
-        # newest first, ahead of the other passages: they are what the question asks for
-        out[:0] = [{**rows[i], 'score': 0.0, 'added_reason': 'latest announcements'}
-                   for i in latest if i in rows]
+        out += [{**rows[i], 'score': 0.0, 'added_reason': 'latest announcements'}
+                for i in latest if i in rows]
+        if latest_mode:
+            # every announcement first, newest first: they are what the question asks
+            # for; the other passages keep their order after them (stable sort)
+            out.sort(key=lambda c: (c['doc_type'] != 'announcement',
+                                    -c['published_at'].toordinal() if c.get('published_at') else 0))
         if guide is not None and guide in rows:
             out.append({**rows[guide], 'score': 0.0, 'added_reason': 'rules guide'})
         return out

@@ -21,6 +21,7 @@ RAG chatbot over `BRACU_RAG_Corpus/` (199 docs, 1,041 chunks). FastAPI on Vercel
 - `bracu/llm.py` provider fallback chain (`LLM_CHAIN`), `bracu/prompts.py` system prompt + [S1] format, `bracu/guard.py` rate limits + feedback in Postgres.
 
 ## Rules
+- Never commit or push. The owner does all git commits.
 - Never commit `.env`; keys live in `.env` locally and in Vercel env vars.
 - Keep corpus YAML front matter (`doc_id`, `status`, `rag_priority`, `superseded_by`). `00_START_HERE/current_rules_guide.md` decides conflicts.
 - Answers must stay grounded: cite sources, prefer current rules, label drafts, say "not found" instead of guessing. Don't weaken `prompts.py`.

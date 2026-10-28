@@ -21,7 +21,7 @@ import bracu.config  # noqa: E402,F401  (loads .env when python-dotenv is instal
 OUT = ROOT / 'tests' / 'fixtures' / 'tavily'
 QUERIES = ['notice', 'schedule Fall 2026', 'admission test', 'registration']
 PARAMS = dict(search_depth='basic', include_domains=['bracu.ac.bd'], time_range='month',
-              max_results=10, include_usage=True)
+              max_results=10, include_answer=False, include_raw_content=False, include_usage=True)
 
 
 def slug(q):

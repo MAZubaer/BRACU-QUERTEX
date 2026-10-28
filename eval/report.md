@@ -74,13 +74,15 @@ Search mode: **hybrid**, top-k = 5
 
 Search mode: **hybrid**, top-k = 5
 
-- Retrieval hit@5: **1/1 (100%)**
+- Retrieval hit@5: **3/3 (100%)**
 - MRR: 1.00
-  - fact: 1/1 (100%)
-- Answers containing the expected facts: **1/1 (100%)**
+  - fact: 3/3 (100%)
+- Answers containing the expected facts: **3/3 (100%)**
 
 | id | type | retrieval | answer | question | also searched |
 |---|---|---|---|---|---|
+| q34 | fact | hit (rank 1) | ok | When do Fall 2026 classes begin? |  |
+| q35 | fact | hit (rank 1) | ok | When are the Fall 2026 mid-term exams? | When are the Fall 2026 mid-term exams? examination |
 | q51 | fact | hit (rank 1) | ok | When is the next mid term exam for CSE? | When is the next mid term exam for CSE? examination |
 <!-- /mode: synonyms + answers -->
 

@@ -1,0 +1,64 @@
+# Daily announcements sync: Tavily SEARCH results (titles, links, snippets of new
+# bracu.ac.bd posts) -> provisional link-only entries in Neon. It never sends a
+# request to bracu.ac.bd. Budget: at most 5 basic searches (5 credits) per run.
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+#   DATABASE_URL_UNPOOLED  Neon direct (unpooled) connection string
+#   TAVILY_API_KEY         Tavily API key
+name: Announcements search sync
+
+on:
+  schedule:
+    - cron: '30 1 * * *'          # 01:30 UTC = 7:30 am in Dhaka, daily
+  workflow_dispatch:
+    inputs:
+      time_range:
+        description: How far back to search
+        type: choice
+        options: [week, day, month]
+        default: week
+      max_searches:
+        description: Searches (credits) for this run, 1-5
+        type: number
+        default: 5
+      dry_run:
+        description: Only show what would be added
+        type: boolean
+        default: false
+
+concurrency:
+  group: announcements-sync       # never two syncs at once
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-sync.txt
+
+      - name: Install
+        run: pip install -r requirements.txt -r requirements-sync.txt
+
+      - name: Offline tests (fixtures only, no network)
+        run: python -m unittest discover -s tests
+
+      - name: Sync
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          TIME_RANGE: ${{ inputs.time_range || 'week' }}
+          MAX_SEARCHES: ${{ inputs.max_searches || 5 }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: python scripts/sync_search.py --time-range "$TIME_RANGE" --max-searches "$MAX_SEARCHES" $DRY_RUN

@@ -36,7 +36,6 @@ class Filter(unittest.TestCase):
             'https://www.bracu.ac.bd/brac-university-host-second-khondker-mahbubuddin-ahmed-'
             'memorial-international-moot-court-competition',
             'https://www.bracu.ac.bd/class-schedule-fall-2026',
-            'https://www.bracu.ac.bd/event/durga-puja-bijoya-dashami-university-closed-1',
             'https://www.bracu.ac.bd/first-year-advising-team-fyat-fall-2026',
             'https://www.bracu.ac.bd/llb-mid-term-schedule-fall-2026',
             'https://www.bracu.ac.bd/notice-application-18th-convocation-2026',
@@ -44,6 +43,7 @@ class Filter(unittest.TestCase):
         self.assertEqual(skipped['other host'], 12)         # cse., ocsar., bigd., helpdesk
         self.assertEqual(skipped['file (privacy guard)'], 5)
         self.assertEqual(skipped['news (not an announcement)'], 1)
+        self.assertEqual(skipped['not a top-level post'], 1)  # /event/durga-puja-...
         for a in new:                                         # what the store gets
             self.assertEqual((a['source'], a['full_text'], a['listed'], a['rag_priority']),
                              ('search', False, False, 3))
@@ -53,7 +53,7 @@ class Filter(unittest.TestCase):
         cases = {
             'https://www.bracu.ac.bd/llb-mid-term-schedule-fall-2026': (True, ''),
             'https://www.bracu.ac.bd/llb-mid-term-schedule-fall-2026/': (True, ''),
-            'https://www.bracu.ac.bd/event/durga-puja-university-closed': (True, ''),
+            'https://www.bracu.ac.bd/event/durga-puja-university-closed': (False, 'not a top-level post'),
             'https://www.bracu.ac.bd/news/brac-university-holds-club-fair-fall-2026':
                 (False, 'news (not an announcement)'),
             'https://cse.bracu.ac.bd/faculty_profile/539/x': (False, 'other host'),
@@ -69,6 +69,8 @@ class Filter(unittest.TestCase):
             'https://www.bracu.ac.bd/admissions': (False, 'section page'),
             'https://www.bracu.ac.bd/news-archive': (False, 'section page'),
             'https://www.bracu.ac.bd/contact': (False, 'not a post slug'),
+            'https://www.bracu.ac.bd/cel-news': (False, 'not a post slug'),
+            'https://www.bracu.ac.bd/fablab-recruitment_circular': (True, ''),   # on the listing
             'https://www.bracu.ac.bd/academics/departments/cse': (False, 'not a top-level post'),
             'https://www.bracu.ac.bd/about/people/vc': (False, 'not a top-level post'),
             'https://www.bracu.ac.bd/node/12345': (False, 'search or node page'),
@@ -125,7 +127,6 @@ class Dates(unittest.TestCase):
         self.assertEqual(d['llb-mid-term-schedule-fall-2026'], (date(2026, 10, 27), 'snippet'))
         self.assertEqual(d['notice-application-18th-convocation-2026'], (date(2026, 9, 30), 'snippet'))
         self.assertEqual(d['first-year-advising-team-fyat-fall-2026'], (date(2026, 9, 28), 'snippet'))
-        self.assertEqual(d['durga-puja-bijoya-dashami-university-closed-1'], (date(2026, 10, 20), 'snippet'))
         self.assertEqual(d['brac-university-host-second-khondker-mahbubuddin-ahmed-memorial-'
                            'international-moot-court-competition'], (TODAY, 'found'))
 
@@ -246,18 +247,33 @@ class Cleaning(unittest.TestCase):
         log = []
         s.select(fixture_results(), set(), TODAY, log)
         skips = [e for e in log if e[0] == 'skip']
-        self.assertEqual(len(skips), 19)                      # 12 hosts + 5 files + 1 news + 1 duplicate
+        self.assertEqual(len(skips), 20)                # 12 hosts + 5 files + 1 news + 1 event + 1 duplicate
         self.assertIn(('skip', 'news (not an announcement)',
                        'https://www.bracu.ac.bd/news/brac-university-holds-club-fair-fall-2026'), skips)
 
 
 class HardRules(unittest.TestCase):
+    def test_errors_are_safe_for_public_logs(self):
+        e = Exception('connection to server at "ep-cool-name-123456-pooler.ap-southeast-1.aws.neon.tech" '
+                      '(13.228.1.2), port 5432 failed: FATAL:  password authentication failed for user '
+                      '"neondb_owner"\nmore detail')
+        msg = s.safe_error(e)
+        for leak in ('ep-cool', 'neon.tech', '13.228', 'neondb_owner', 'more detail'):
+            self.assertNotIn(leak, msg)
+        self.assertIn('password authentication failed', msg)
+        self.assertNotIn('tvly-abc123', s.safe_error(ValueError('bad key tvly-abc123XYZ')))
+        self.assertNotIn('secret', s.safe_error(ValueError('postgresql://u:secret@h/db')))
+
     def test_search_endpoint_only(self):
-        src = (ROOT / 'scripts' / 'sync_search.py').read_text(encoding='utf-8')
-        code = re.sub(r'"""[\s\S]*?"""', '', src)          # ignore docstrings
-        for bad in ('.extract(', '.crawl(', '.map(', 'import requests', 'urllib.request',
-                    'include_raw_content=True', 'include_answer=True', 'httpx'):
-            self.assertNotIn(bad, code)
+        # no script may call Tavily extract/crawl/map or fetch pages itself
+        # (fetch_model.py downloads the embedding model from Hugging Face, not BRACU)
+        for path in (ROOT / 'scripts').glob('*.py'):
+            code = re.sub(r'"""[\s\S]*?"""', '', path.read_text(encoding='utf-8'))   # ignore docstrings
+            bad = ['.extract(', '.crawl(', '.map(', 'include_raw_content=True', 'include_answer=True']
+            if path.name != 'fetch_model.py':
+                bad += ['import requests', 'urllib.request', 'httpx', 'urlopen']
+            for b in bad:
+                self.assertNotIn(b, code, f'{path.name}: {b}')
         self.assertEqual(s.SEARCH['search_depth'], 'basic')
         self.assertIs(s.SEARCH['include_raw_content'], False)
         self.assertIs(s.SEARCH['include_answer'], False)

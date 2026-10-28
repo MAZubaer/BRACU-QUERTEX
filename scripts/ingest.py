@@ -34,7 +34,7 @@ from bracu.db import connect                 # noqa: E402
 from bracu.embedder import to_pgvector       # noqa: E402
 from bracu.text import tokenize              # noqa: E402
 
-ANNOUNCEMENT_ID_START = 1_000_000   # chunk ids of the sync/import start here
+from announcements_store import ID_START as ANNOUNCEMENT_ID_START, LOCK_KEY  # noqa: E402
 
 COLS = ['id','chunk_id', 'doc_id', 'title', 'section', 'status', 'rag_priority', 'category',
         'doc_type', 'source_type', 'url', 'source', 'approved_on', 'effective_date',
@@ -106,6 +106,9 @@ def main():
         conn.autocommit = False
         with conn.transaction(), conn.cursor() as cur:
             cur.execute((ROOT / 'sql' / 'schema.sql').read_text(encoding='utf-8'))
+            # the sync/import writers take this lock too: none of their rows can be
+            # written between setting them aside and the TRUNCATE below
+            cur.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', (LOCK_KEY,))
             # Replace the corpus only: announcement rows (ids >= 1,000,000) are set
             # aside, the tables truncated (no dead rows, unlike a 175k-row DELETE)
             # and the announcement rows put back.
