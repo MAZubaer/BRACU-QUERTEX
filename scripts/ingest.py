@@ -8,15 +8,16 @@ Steps
 1. Chunk BRACU_RAG_Corpus/ -> data/chunks.jsonl (scripts/chunker.py).
 2. Embed every chunk's context_text with the ONNX e5 model (model/ folder).
 3. Build BM25 postings with bracu/text.py's tokenizer.
-4. In ONE transaction: create tables if needed, replace all rows, save index
-   facts. The live site keeps answering from the old data until the commit.
+4. In ONE transaction: create tables if needed, replace the corpus rows
+   (origin='corpus'; announcement rows from the sync/import are kept), refresh
+   the BM25 statistics over all rows, save index facts. The live site keeps
+   answering from the old data until the commit.
 
 Uses DATABASE_URL_UNPOOLED if set (the Vercel-Neon integration creates it),
 otherwise DATABASE_URL.
 """
 import argparse
 import json
-import math
 import os
 import sys
 import time
@@ -33,7 +34,9 @@ from bracu.db import connect                 # noqa: E402
 from bracu.embedder import to_pgvector       # noqa: E402
 from bracu.text import tokenize              # noqa: E402
 
-COLS = ['id', 'chunk_id', 'doc_id', 'title', 'section', 'status', 'rag_priority', 'category',
+ANNOUNCEMENT_ID_START = 1_000_000   # chunk ids of the sync/import start here
+
+COLS = ['id','chunk_id', 'doc_id', 'title', 'section', 'status', 'rag_priority', 'category',
         'doc_type', 'source_type', 'url', 'source', 'approved_on', 'effective_date',
         'superseded_by', 'file', 'chunk_index', 'words', 'text', 'context_text',
         'bm25_len', 'embedding']
@@ -68,14 +71,11 @@ def embed(chunks, npy=None):
     return vecs
 
 
-def bm25_tables(chunks):
+def bm25_postings(chunks):
+    """Term counts per chunk; idf and the average length are computed in SQL
+    (refresh_bm25_stats) over all chunks, corpus and announcements."""
     tfs = [Counter(tokenize(c['context_text'])) for c in chunks]
-    lens = [sum(tf.values()) for tf in tfs]
-    df = Counter(t for tf in tfs for t in tf)
-    n = len(chunks)
-    idf = {t: math.log(1 + (n - d + 0.5) / (d + 0.5)) for t, d in df.items()}
-    avg = sum(lens) / n if n else 1.0
-    return tfs, lens, idf, avg
+    return tfs, [sum(tf.values()) for tf in tfs]
 
 
 def main():
@@ -94,10 +94,11 @@ def main():
     chunks = load_chunks(config.CHUNKS_FILE)
     print(f'{len(chunks)} chunks')
 
+    if len(chunks) >= ANNOUNCEMENT_ID_START:
+        sys.exit(f'{len(chunks)} corpus chunks would reach the announcement ids ({ANNOUNCEMENT_ID_START}).')
     vecs = None if args.keyword_only else embed(chunks, args.embeddings)
-    tfs, lens, idf, avg = bm25_tables(chunks)
-    n_post = sum(len(tf) for tf in tfs)
-    print(f'BM25: {len(idf)} terms, {n_post} postings, avg length {avg:.1f}')
+    tfs, lens = bm25_postings(chunks)
+    print(f'BM25: {sum(len(tf) for tf in tfs)} corpus postings')
 
     url = args.database_url or os.environ.get('DATABASE_URL_UNPOOLED') or config.DATABASE_URL
     t = time.time()
@@ -105,7 +106,16 @@ def main():
         conn.autocommit = False
         with conn.transaction(), conn.cursor() as cur:
             cur.execute((ROOT / 'sql' / 'schema.sql').read_text(encoding='utf-8'))
-            cur.execute('TRUNCATE chunks, bm25_postings, bm25_terms')
+            # Replace the corpus only: announcement rows (ids >= 1,000,000) are set
+            # aside, the tables truncated (no dead rows, unlike a 175k-row DELETE)
+            # and the announcement rows put back.
+            cur.execute(f"""CREATE TEMP TABLE keep_chunks ON COMMIT DROP AS
+                            SELECT * FROM chunks WHERE id >= {ANNOUNCEMENT_ID_START}""")
+            cur.execute(f"""CREATE TEMP TABLE keep_postings ON COMMIT DROP AS
+                            SELECT * FROM bm25_postings WHERE chunk >= {ANNOUNCEMENT_ID_START}""")
+            cur.execute('TRUNCATE chunks, bm25_postings')
+            cur.execute('INSERT INTO chunks SELECT * FROM keep_chunks')
+            cur.execute('INSERT INTO bm25_postings SELECT * FROM keep_postings')
             with cur.copy(f"COPY chunks ({', '.join(COLS)}) FROM STDIN") as cp:
                 for i, c in enumerate(chunks):
                     cp.write_row([
@@ -122,22 +132,24 @@ def main():
                 for i, tf in enumerate(tfs):
                     for term, count in tf.items():
                         cp.write_row([term, i, count])
-            with cur.copy('COPY bm25_terms (term, idf) FROM STDIN') as cp:
-                for term, v in idf.items():
-                    cp.write_row([term, v])
+            cur.execute('SELECT refresh_bm25_stats()')
             build = {'built_at': datetime.now(timezone.utc).isoformat(timespec='seconds'),
                      'chunks': len(chunks),
                      'embedding_model': config.EMBED_MODEL if vecs is not None else None,
                      'documents': len({c['doc_id'] for c in chunks})}
-            for key, value in (('bm25', {'avg_len': avg, 'n': len(chunks), 'k1': 1.5, 'b': 0.75}),
-                               ('build', build)):
-                cur.execute("""INSERT INTO index_info (key, value) VALUES (%s, %s)
-                               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""",
-                            (key, json.dumps(value)))
+            cur.execute("""INSERT INTO index_info (key, value) VALUES ('build', %s)
+                           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""",
+                        (json.dumps(build),))
+            cur.execute("""SELECT (SELECT count(*) FROM bm25_terms),
+                                  (SELECT count(*) FROM chunks WHERE origin <> 'corpus'),
+                                  (SELECT value FROM index_info WHERE key = 'bm25')""")
+            n_terms, n_other, bm25 = cur.fetchone()
         conn.autocommit = True
         conn.execute('ANALYZE chunks')
         conn.execute('ANALYZE bm25_postings')
         conn.execute('ANALYZE bm25_terms')
+    print(f'BM25 over all {bm25["n"]} chunks ({n_other} announcement chunks kept): '
+          f'{n_terms} terms, avg length {bm25["avg_len"]:.1f}')
     print(f'Uploaded to Postgres in {time.time() - t:.1f}s. Done.')
 
 

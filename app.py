@@ -7,6 +7,8 @@ Endpoints
   POST /api/chat       {"question", "history": [...]} -> Server-Sent Events:
                        search {"queries", "planner"}, sources, token (many), done | error
   POST /api/feedback   {"rating": 1|-1, "question", "answer", "source_ids"}
+  GET  /api/announcements?limit=5   newest announcements (title, date, date_source, url,
+                       full_text, listed); cached 5 minutes
   GET  /api/health     database, index and provider status
 """
 import json
@@ -14,7 +16,7 @@ import threading
 from pathlib import Path
 from typing import List, Literal, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +26,7 @@ from bracu import config, llm
 from bracu.embedder import embedder_status, get_embedder
 from bracu.guard import check_rate_limit, client_key, save_feedback
 from bracu.rag import ask, cited_numbers, source_card
-from bracu.retriever import index_info
+from bracu.retriever import index_info, latest_announcements
 
 app = FastAPI(title='BRACU QUERTEX API', docs_url='/api/docs', openapi_url='/api/openapi.json')
 
@@ -117,6 +119,20 @@ def feedback(req: FeedbackRequest):
         print(f'[feedback] {e}')
         return JSONResponse({'ok': False}, status_code=503)
     return {'ok': True}
+
+
+@app.get('/api/announcements')
+def announcements(limit: int = Query(5, ge=1, le=20)):
+    """Newest BRAC University announcements for the "Latest notices" panel:
+    confirmed (listed) posts first, then provisional ones found by search."""
+    try:
+        items = latest_announcements(limit)
+    except Exception as e:
+        print(f'[announcements] {type(e).__name__}: {e}')
+        return JSONResponse({'announcements': []}, status_code=503,
+                            headers={'Cache-Control': 'no-store'})
+    return JSONResponse({'announcements': items},
+                        headers={'Cache-Control': 'public, max-age=300, s-maxage=900'})
 
 
 @app.get('/api/health')

@@ -19,6 +19,7 @@ Per question: 1 query for all candidate lists (ids + light metadata),
 """
 import re
 from collections import Counter, defaultdict
+from datetime import timedelta
 
 from . import config, db
 from .embedder import get_embedder, to_pgvector
@@ -34,7 +35,18 @@ GUIDE_DOC = 'current_rules_guide'
 
 CHUNK_COLUMNS = ('id, chunk_id, doc_id, title, section, status, rag_priority, category, '
                  'doc_type, source_type, url, source, approved_on, effective_date, '
-                 'superseded_by, file, chunk_index, words, text, context_text')
+                 'superseded_by, file, chunk_index, words, text, context_text, origin, published_at')
+ANNOUNCEMENT_COLUMNS = ('date_source', 'full_text', 'listed')   # from the announcements table
+
+# Announcements (doc_type 'announcement') rank by age; corpus documents are unchanged.
+# Older than a year they are left out like superseded documents (unless history).
+RECENT_DAYS, OLD_DAYS = 90, 365
+RECENT_WEIGHT, AGING_WEIGHT, UNCONFIRMED_WEIGHT = 1.1, 0.8, 0.9
+# "Latest notices" questions also get the newest announcements by date.
+NOTICE_WORDS = re.compile(r'\b(notices?|announcements?|circulars?)\b|নোটিশ|ঘোষণা|বিজ্ঞপ্তি', re.I)
+RECENT_WORDS = re.compile(r'\b(latest|recent|recently|new|newest|today|this\s+week|upcoming)\b|'
+                          r'সর্বশেষ|নতুন|সাম্প্রতিক|আজ', re.I)
+LATEST_EXTRA_WORDS = 1500        # word budget for those extra announcements
 
 # BM25 score of every chunk containing at least one query term.
 BM25_SQL = f"""
@@ -49,12 +61,29 @@ BM25_SQL = f"""
     WHERE p.term = ANY(%({{terms}})s) {{extra}}
     GROUP BY p.chunk"""
 
-LIGHT = 'c.doc_id, c.status, c.rag_priority, c.words'
+LIGHT = 'c.doc_id, c.status, c.rag_priority, c.words, c.doc_type, c.published_at, a.listed'
+LIGHT_JOIN = 'LEFT JOIN announcements a ON a.doc_id = c.doc_id'
 
 
 def same_text_key(text):
     """Queries that differ only in case, spacing or punctuation are one query."""
     return ' '.join(re.findall(r'\w+', text.lower()))
+
+
+def wants_latest(texts):
+    """A question about the latest / recent / new notices or announcements."""
+    return any(NOTICE_WORDS.search(t) and RECENT_WORDS.search(t) for t in texts if t)
+
+
+def announcement_weight(c, today):
+    """(weight, too_old) for an announcement chunk: x1.1 under 90 days, x0.8 up to
+    a year, older = like superseded; x0.9 more while not confirmed on the
+    announcements listing (listed=false)."""
+    age = (today - c['published_at']).days if c['published_at'] else 0
+    if age > OLD_DAYS:
+        return 1.0, True
+    w = RECENT_WEIGHT if age < RECENT_DAYS else AGING_WEIGHT
+    return (w * UNCONFIRMED_WEIGHT if c['listed'] is False else w), False
 
 
 class Retriever:
@@ -86,7 +115,7 @@ class Retriever:
                     SELECT 'bm{j}' AS kind, bm.id, bm.score, {LIGHT}
                     FROM ({BM25_SQL.format(terms=f'terms{j}', extra='')}
                           ORDER BY score DESC, id LIMIT %(n)s) bm
-                    JOIN chunks c ON c.id = bm.id""")
+                    JOIN chunks c ON c.id = bm.id {LIGHT_JOIN}""")
             if emb is not None:
                 params[f'qv{j}'] = to_pgvector(vecs[j])
                 parts.append(f"""
@@ -94,15 +123,16 @@ class Retriever:
                     FROM (SELECT id, 1 - (embedding <=> %(qv{j})s::vector) AS score
                           FROM chunks WHERE embedding IS NOT NULL
                           ORDER BY embedding <=> %(qv{j})s::vector, id LIMIT %(n)s) v
-                    JOIN chunks c ON c.id = v.id""")
+                    JOIN chunks c ON c.id = v.id {LIGHT_JOIN}""")
         if not parts:
             return [], {}
         rows = db.fetchall(' UNION ALL '.join(f'({p})' for p in parts), params)
         lists = defaultdict(list)
         meta = {}
-        for kind, i, score, doc_id, status, prio, words in rows:
+        for kind, i, score, doc_id, status, prio, words, doc_type, published_at, listed in rows:
             lists[kind].append((score, i))
-            meta[i] = {'doc_id': doc_id, 'status': status, 'rag_priority': prio, 'words': words}
+            meta[i] = {'doc_id': doc_id, 'status': status, 'rag_priority': prio, 'words': words,
+                       'doc_type': doc_type, 'published_at': published_at, 'listed': listed}
         out = []
         for j in range(len(queries)):
             out.append([i for _, i in sorted(lists[f'bm{j}'], key=lambda x: (-x[0], x[1]))])
@@ -127,9 +157,23 @@ class Retriever:
     def _fetch(ids):
         if not ids:
             return {}
-        rows = db.fetchall(f'SELECT {CHUNK_COLUMNS} FROM chunks WHERE id = ANY(%s)', (list(ids),))
         cols = [c.strip() for c in CHUNK_COLUMNS.split(',')]
+        rows = db.fetchall(f"""SELECT {', '.join('c.' + k for k in cols)},
+                                      {', '.join('a.' + k for k in ANNOUNCEMENT_COLUMNS)}
+                               FROM chunks c {LIGHT_JOIN} WHERE c.id = ANY(%s)""", (list(ids),))
+        cols += ANNOUNCEMENT_COLUMNS
         return {r[0]: dict(zip(cols, r)) for r in rows}
+
+    @staticmethod
+    def _latest_announcements(today, include_history, n):
+        """First chunk of the n newest announcements: [(id, words)]."""
+        return db.fetchall("""
+            SELECT c.id, c.words FROM announcements a
+            JOIN chunks c ON c.doc_id = a.doc_id AND c.chunk_index = 0
+            WHERE %(hist)s OR a.published_at IS NULL OR a.published_at >= %(since)s
+            ORDER BY a.published_at DESC NULLS LAST, a.listed DESC, c.id
+            LIMIT %(n)s""", {'hist': include_history, 'n': n,
+                             'since': today - timedelta(days=OLD_DAYS)})
 
     # ---------------------------------------------------------------- search
     def search(self, query, k=None, include_history=None, history_text='', extra_queries=()):
@@ -151,13 +195,15 @@ class Retriever:
             for rank, i in enumerate(lst):
                 fused[i] += 1.0 / (RRF_K + rank + 1)
 
+        today = config.today()
         scored, raw = [], []
         for i, s in fused.items():
             c = meta[i]
-            if c['status'] == 'superseded' and not include_history:
+            aw, too_old = announcement_weight(c, today) if c['doc_type'] == 'announcement' else (1.0, False)
+            if (c['status'] == 'superseded' or too_old) and not include_history:
                 continue
-            w = PRIORITY_WEIGHT.get(int(c['rag_priority']), 1.0)
-            if c['status'] == 'superseded':
+            w = PRIORITY_WEIGHT.get(int(c['rag_priority']), 1.0) * aw
+            if c['status'] == 'superseded' or too_old:
                 w = 1.0                  # the question is about history: treat normally
             scored.append((s * w, i))
             raw.append((s, i))
@@ -207,12 +253,36 @@ class Retriever:
             g = [(fused[i], i) for i in fused if meta[i]['doc_id'] == GUIDE_DOC and fused[i] > 0]
             guide = max(g)[1] if g else self._best_guide_by_keywords(' '.join(queries))
 
-        rows = self._fetch(chosen + ([guide] if guide is not None else []))
+        # "What are the latest notices?": add the newest announcements by date.
+        latest = []
+        if wants_latest([query, *queries]):
+            extra_words = 0
+            for i, w in self._latest_announcements(today, include_history, config.LATEST_ANNOUNCEMENTS):
+                if i not in chosen and extra_words + w <= LATEST_EXTRA_WORDS:
+                    latest.append(i)
+                    extra_words += w
+
+        rows = self._fetch(chosen + latest + ([guide] if guide is not None else []))
         out = [{**rows[i], 'score': round(weighted[i], 5)} for i in chosen if i in rows]
         out.sort(key=lambda c: -c['score'])
+        # newest first, ahead of the other passages: they are what the question asks for
+        out[:0] = [{**rows[i], 'score': 0.0, 'added_reason': 'latest announcements'}
+                   for i in latest if i in rows]
         if guide is not None and guide in rows:
             out.append({**rows[guide], 'score': 0.0, 'added_reason': 'rules guide'})
         return out
+
+
+def latest_announcements(limit=5):
+    """For /api/announcements and the "Latest notices" panel: posts confirmed on
+    the announcements listing first, then provisional (search) ones; last year only."""
+    rows = db.fetchall("""
+        SELECT title, published_at, date_source, url, full_text, listed FROM announcements
+        WHERE published_at IS NULL OR published_at >= %s
+        ORDER BY listed DESC, published_at DESC NULLS LAST, url LIMIT %s""",
+                       (config.today() - timedelta(days=OLD_DAYS), limit))
+    return [{'title': t, 'date': d.isoformat() if d else None, 'date_source': ds, 'url': u,
+             'full_text': ft, 'listed': li} for t, d, ds, u, ft, li in rows]
 
 
 def index_info():

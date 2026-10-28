@@ -1,0 +1,77 @@
+{
+  "query": "notice",
+  "follow_up_questions": null,
+  "answer": null,
+  "images": [],
+  "results": [
+    {
+      "url": "https://www.bracu.ac.bd/notice-application-18th-convocation-2026",
+      "title": "Notice : Application for the 18th Convocation 2026",
+      "content": "Sep 30, 2026 — Notice : Application for the 18th Convocation 2026. Publish Date: Wednesday, September 30, 2026 - 17:30. Notice : Application for the 18th Convocation 2026 ...Read more",
+      "score": 0.23532839,
+      "raw_content": null,
+      "id": "f4527d-00"
+    },
+    {
+      "url": "https://www.bracu.ac.bd/sites/default/files/uploads/2026/09/28/Web%20Notice%20FALL%2026.pdf",
+      "title": "Web Notice FALL 26.docx",
+      "content": "[redacted in this fixture: list of students/applicants with names and IDs]",
+      "score": 0.19456702,
+      "raw_content": null,
+      "id": "019ede-01"
+    },
+    {
+      "url": "https://www.bracu.ac.bd/sites/default/files/uploads/2026/09/30/Announcement%20-%2018th%20Convocation%202026.pdf",
+      "title": "18th Convocation 2026",
+      "content": "Sep 30, 2026 — Notice : Application for the 18 th. Convocation. 2026. Registration deadline: 15th October 2026. Best wishes from Office of the. Controller of Examinations.Read more1 page",
+      "score": 0.1880856,
+      "raw_content": null,
+      "id": "74f8db-02"
+    },
+    {
+      "url": "https://ocsar.bracu.ac.bd/event-registration-notice",
+      "title": "Event Registration Notice",
+      "content": "Sep 30, 2026 — Please log in to your account to continue with your registration. Login to Continue. Need help? How to activate or update your alumni profile online.Read more",
+      "score": 0.12965623,
+      "raw_content": null,
+      "id": "081808-03"
+    },
+    {
+      "url": "https://www.bracu.ac.bd/first-year-advising-team-fyat-fall-2026",
+      "title": "First Year Advising Team (FYAT), Fall 2026",
+      "content": "Sep 28, 2026 — You will get the Group name, FYAT Adviser and Mentor in the FYAT Web notice. After getting the FYAT group you need to fill up the Google Form and submit it ...Read more",
+      "score": 0.108897865,
+      "raw_content": null,
+      "id": "7aff7d-04"
+    },
+    {
+      "url": "http://csehelpdesk.bracu.ac.bd",
+      "title": "Customer Login - Help Center - Jira Service Management",
+      "content": "Oct 2, 2026 — Accept all cookies to indicate that you agree to our use of cookies on your device. Atlassian cookies and tracking notice, (opens new window). Atlassian uses ...Read more",
+      "score": 0.094418734,
+      "raw_content": null,
+      "id": "1e43bc-05"
+    },
+    {
+      "url": "https://www.bracu.ac.bd/event/durga-puja-bijoya-dashami-university-closed-1",
+      "title": "Durga Puja (Bijoya Dashami) - University Closed",
+      "content": "Oct 20, 2026 — Durga Puja (Bijoya Dashami) - University Closed. October 20th, 2026 - 9:00pm to October 22nd, 2026 - 9:00pm. Contact Us. Address: Kha 224 Pragati Sarani, ...Read more",
+      "score": 0.06694044,
+      "raw_content": null,
+      "id": "7f5e29-06"
+    },
+    {
+      "url": "https://ocsar.bracu.ac.bd/cse-accreditation-calling-all-bracu-cscse-alumni",
+      "title": "CSE Accreditation | Calling All BRACU CS/CSE Alumni!",
+      "content": "Sep 28, 2026 — Calling All BRACU CS/CSE Alumni! Come Back and Give Back! ; CSE Accreditation | Seeking 50 Alumni Participants ; Day 01: Preparation Session 10 October 2026 ...Read more",
+      "score": 0.05620019,
+      "raw_content": null,
+      "id": "98fbe7-07"
+    }
+  ],
+  "response_time": 1.15,
+  "usage": {
+    "credits": 1
+  },
+  "request_id": "2a021a5d-8d98-4cac-9374-7cb4fdb68a11"
+}

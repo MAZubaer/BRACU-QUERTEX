@@ -92,6 +92,9 @@ def source_card(n, c):
         'approved_on': c.get('approved_on') or '', 'url': c.get('url') or '',
         'file': c.get('file') or '', 'excerpt': ' '.join(c['text'].split())[:400],
         'added_reason': c.get('added_reason', ''),
+        **({'published': c['published_at'].isoformat() if c.get('published_at') else '',
+            'date_source': c.get('date_source') or '', 'link_only': not c.get('full_text'),
+            'listed': bool(c.get('listed'))} if c.get('doc_type') == 'announcement' else {}),
     }
 
 

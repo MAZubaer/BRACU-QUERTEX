@@ -1,0 +1,6 @@
+# For the announcement scripts (GitHub Actions and your PC), on top of requirements.txt.
+# Not installed on Vercel: the live site only reads the announcement tables.
+PyYAML>=6.0            # scripts/chunker.py, used by scripts/announcements_store.py
+tavily-python>=0.8     # scripts/sync_search.py (search endpoint only)
+beautifulsoup4>=4.12   # scripts/import_saved_pages.py
+lxml>=5.0

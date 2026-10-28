@@ -1,6 +1,7 @@
 """All settings in one place. Values come from environment variables
 (.env on your PC, Project Settings -> Environment Variables on Vercel)."""
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,6 +44,14 @@ MAX_PER_DOC = int(_get('MAX_PER_DOC', '3'))      # diversity: max passages per d
 MAX_CONTEXT_WORDS = int(_get('MAX_CONTEXT_WORDS', '2500'))
 CANDIDATES = int(_get('CANDIDATES', '60'))       # per search method, before fusion
 TRANSLATE_QUERIES = _bool('TRANSLATE_QUERIES', 'true')   # Bangla -> add English for search
+LATEST_ANNOUNCEMENTS = int(_get('LATEST_ANNOUNCEMENTS', '8'))  # added for "latest notices" questions
+
+DHAKA = timezone(timedelta(hours=6))             # Bangladesh time (no daylight saving)
+
+
+def today():
+    """Today's date in Bangladesh (dates in the prompt, announcement ages)."""
+    return datetime.now(DHAKA).date()
 
 # ---- query planner: one fast LLM call rewrites the question into document-style queries
 QUERY_PLANNER = _bool('QUERY_PLANNER', 'true')

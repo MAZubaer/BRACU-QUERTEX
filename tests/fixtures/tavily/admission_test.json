@@ -1,0 +1,37 @@
+{
+  "query": "admission test",
+  "follow_up_questions": null,
+  "answer": null,
+  "images": [],
+  "results": [
+    {
+      "url": "https://www.bracu.ac.bd/sites/default/files/admission/results/Fall-2020/Final%20Result-2nd%20Intake-EMBA-updated.pdf",
+      "title": "EMBA Admission Test Result - Dhaka",
+      "content": "[redacted in this fixture: list of students/applicants with names and IDs]",
+      "score": 0.3881778,
+      "raw_content": null,
+      "id": "687fbf-00"
+    },
+    {
+      "url": "https://bigd.bracu.ac.bd/publications/page/53",
+      "title": "Publications Archive - Page 53 of 86 - BRAC Institute of Governance and Development",
+      "content": "Title: Publications Archive - Page 53 of 86 - BRAC Institute of Governance and Development\n## The Long Run Relationship Between Population Growth and Economic Growth: Empirical Evidence From Bangladesh. This paper investigates the causal relationship between GDP per capita and population growth in Bangladesh. Using the Johansen co-integration test, it found evidence of a long-run relationship between population growth and GDP per capita. Next with a Vector Error Correction Model (VEC), the author found a causal direction between the two, which suggests that in Bangladesh population growth actually negatively affects GDP per capita, but not vice versa. The present analysis shows that there is a uni-directional negative causality from population growth to GDP per capita in the long run, which also means Bangladesh is now in the stage of a Modern Growth regime but is yet to attain the influence of GDP on population. Furthermore, the additional labour is not being used efficiently, and economies of scale have not yet been attained: this is worsening the economic condition with the growing population. ## e-Government Procurement: Towards a Transparent and Efficient Procurement Management at Local Level. In mid-2010, the Bangladesh government started piloting the ‘Integrated Electronic Government Procurement (e-GP) System’ for selected procuring entities such as the Local Government Engineering Department (LGED), the Roads and Highways Department (RHD), Bangladesh Water Development Board (BWDB) and Bangladesh Rural Electrification Board (REB). e-GP has simplified the public procurement process for both procuring entities and bidders. The purpose of this policy note is two-fold: a) to provide an empirical assessment of the experiences (benefits derived, process-related challenges, governance issues, capacity/proficiency factors) of both state officials and the business community, in using Electronic Government Procurement or e-GP at the local level; and b) to offer a few policy recommendations, which will contribute to the relevant policy development in this area. From 2014 this unit launched Neuro-Developmental Disability (NDD) centres for poor communities in Bangladesh in cooperation with the Health, Nutrition & Population Programme (HNPP) of BRAC. The main objective of this chapter is to evaluate the effectiveness of the CC program in terms of delivering public services in Bangladesh and to assess the challenges of making it a success.",
+      "score": 0.030795148,
+      "raw_content": null,
+      "id": "e7f3f8-01"
+    },
+    {
+      "url": "https://bigd.bracu.ac.bd/publications/short-and-long-run-growth-effects-of-fiscal-policy-in-bangladesh",
+      "title": "Short- and Long-run Growth Effects of Fiscal Policy in Bangladesh - BRAC Institute of Governance and Development",
+      "content": "Title: Short- and Long-run Growth Effects of Fiscal Policy in Bangladesh - BRAC Institute of Governance and Development\nSTART TYPING AND PRESS ENTER TO SEARCH. # Publications. ### Short- and Long-run Growth Effects of Fiscal Policy in Bangladesh. ### View Publication. The potential interactions between government expenditure, taxation and growth are complex and manifold and thus, it gives rise to a constant debate about the growth-effectiveness of the fiscal policy, especially in developing countries like Bangladesh. Both the ARDL approach to cointegration and the error correction (ECT) coefficients confirm the existence of a stable long-run relationship between economic growth and fiscal variables. The ECT results also confirm that the disequilibrium for the GDP equation converges if any shock occurs in the short run. Results using the Granger causality test show that direct tax has two-way causal relationships with economic growth whereas indirect tax and revenue expenditure has a unidirectional relationship with GDP in the short run. In the long run, indirect tax has a negative effect and revenue expenditure and fiscal deficit exert positive effects on growth. Based on empirical findings, this study indicates the importance of collecting more direct tax as it guarantees higher growth through financing the revenue expenditure and improves equity of taxation due to the progressive nature of the direct tax. **Authors:** Rahman, Sultan Hafeez; Siddiquee, Muhammad Shahadat Hossain.",
+      "score": 0.021967173,
+      "raw_content": null,
+      "id": "2d2bed-02"
+    }
+  ],
+  "response_time": 3.21,
+  "usage": {
+    "credits": 1
+  },
+  "request_id": "60833bd6-8eee-4f28-ae53-b24882c2ca17"
+}
