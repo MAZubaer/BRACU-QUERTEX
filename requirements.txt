@@ -1,0 +1,7 @@
+# Runtime packages (what Vercel installs). No PyTorch: the embedding model runs on onnxruntime.
+fastapi>=0.115
+onnxruntime>=1.18
+tokenizers>=0.19
+numpy>=1.26
+psycopg[binary]>=3.2
+requests>=2.31

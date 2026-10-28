@@ -1,0 +1,5 @@
+# For your PC: everything above plus what ingest.py and the local server need.
+-r requirements.txt
+PyYAML>=6.0
+python-dotenv>=1.0
+uvicorn>=0.30
