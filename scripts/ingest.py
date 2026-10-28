@@ -3,6 +3,8 @@
     python scripts/ingest.py                 # chunk corpus, embed, upload everything
     python scripts/ingest.py --no-chunk      # reuse data/chunks.jsonl as it is
     python scripts/ingest.py --keyword-only  # skip embeddings (no model needed)
+    python scripts/ingest.py --rebuild-postings  # after a tokenizer change: announcement
+                                                 # chunks are re-tokenized too (not re-embedded)
 
 Steps
 1. Chunk BRACU_RAG_Corpus/ -> data/chunks.jsonl (scripts/chunker.py).
@@ -84,6 +86,8 @@ def main():
     ap.add_argument('--keyword-only', action='store_true', help='do not store embeddings')
     ap.add_argument('--embeddings', help='reuse vectors from a .npy file (testing)')
     ap.add_argument('--database-url', help='override DATABASE_URL')
+    ap.add_argument('--rebuild-postings', action='store_true',
+                    help='also re-tokenize the kept announcement chunks (after a bracu/text.py change)')
     args = ap.parse_args()
 
     if not args.no_chunk and config.CORPUS_DIR.exists():
@@ -118,7 +122,20 @@ def main():
                             SELECT * FROM bm25_postings WHERE chunk >= {ANNOUNCEMENT_ID_START}""")
             cur.execute('TRUNCATE chunks, bm25_postings')
             cur.execute('INSERT INTO chunks SELECT * FROM keep_chunks')
-            cur.execute('INSERT INTO bm25_postings SELECT * FROM keep_postings')
+            if args.rebuild_postings:
+                # tokenizer changed: re-tokenize the kept announcement chunks from their
+                # stored context_text (their vectors don't depend on the tokenizer)
+                kept = cur.execute('SELECT id, context_text FROM keep_chunks').fetchall()
+                with cur.copy('COPY bm25_postings (term, chunk, tf) FROM STDIN') as cp:
+                    for i, text in kept:
+                        tf = Counter(tokenize(text))
+                        for term, n in tf.items():
+                            cp.write_row([term, i, n])
+                cur.executemany('UPDATE chunks SET bm25_len = %s WHERE id = %s',
+                                [(len(tokenize(text)), i) for i, text in kept])
+                print(f'Re-tokenized {len(kept)} announcement chunks')
+            else:
+                cur.execute('INSERT INTO bm25_postings SELECT * FROM keep_postings')
             with cur.copy(f"COPY chunks ({', '.join(COLS)}) FROM STDIN") as cp:
                 for i, c in enumerate(chunks):
                     cp.write_row([

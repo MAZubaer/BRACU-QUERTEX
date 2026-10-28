@@ -2,12 +2,18 @@
 
 Used twice: by scripts/ingest.py to build the BM25 postings stored in
 Postgres, and by the retriever to tokenize questions. Both sides MUST use
-this same function, so never change it without running ingest.py again.
-(Copied unchanged from the original retriever.py.)
+this same function, so never change it without running ingest.py again
+(`--rebuild-postings` also re-tokenizes the announcement chunks).
+Based on the original retriever.py; since then letter/digit boundaries split
+tokens so course codes match with or without a space (CSE420 = CSE 420).
 """
 import re
 
 TOKEN = re.compile(r'[0-9a-zঀ-৿]+')
+# letter/digit boundaries split a token: cse420 -> cse 420, 400d -> 400 d, fall2026 -> fall 2026
+# (ASCII only, so Bangla words are unchanged); "30th" -> "30" (ordinal suffix dropped)
+LETTER_DIGIT = re.compile(r'(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])')
+ORDINAL = {'st', 'nd', 'rd', 'th'}
 STOP = set('''a an the of to in on for and or is are was were be been by with at from as
 that this these those it its what which who whom how do does did can could i my me we
 our you your any there their than then so if not no will would should shall may must
@@ -48,7 +54,15 @@ def _stem(t):
     return SAME_WORD.get(t, t)
 
 
+def _pieces(token):
+    """A token mixing ASCII letters and digits -> its parts, without ordinal suffixes."""
+    parts = LETTER_DIGIT.split(token)
+    if len(parts) == 1:
+        return parts
+    return [p for i, p in enumerate(parts) if not (p in ORDINAL and i and parts[i - 1].isdigit())]
+
+
 def tokenize(text):
-    toks = [_stem(t) for t in TOKEN.findall(text.lower()) if t not in STOP]
+    toks = [_stem(p) for t in TOKEN.findall(text.lower()) for p in _pieces(t) if p not in STOP]
     # passages give addresses, not the word "email": let "what email ..." match them
     return toks + ['email'] * len(EMAIL.findall(text))
