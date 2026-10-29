@@ -141,7 +141,8 @@ def health():
            'providers': [{'provider': p, 'model': m, 'has_key': ok} for p, m, ok in llm.available()]}
     try:
         info = index_info()
-        out.update(chunks=info.get('chunks'), index=info.get('build'))
+        out.update(chunks=info.get('chunks'), index=info.get('build'),
+                   last_search_sync=info.get('search_sync'))   # the daily announcement search
     except Exception as e:
         out.update(ok=False, database=f'unavailable ({type(e).__name__})')
     return out

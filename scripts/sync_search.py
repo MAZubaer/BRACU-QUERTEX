@@ -19,11 +19,12 @@ Needs TAVILY_API_KEY (.env locally, a GitHub secret in Actions) and
 DATABASE_URL (use the unpooled URL in Actions).
 """
 import argparse
+import json
 import os
 import re
 import sys
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -271,6 +272,13 @@ def main():
         if seen_again:
             conn.execute('UPDATE announcements SET last_seen = now() WHERE url = ANY(%s)',
                          (list(seen_again),))
+        # the last successful run, shown by /api/health as "last_search_sync"
+        run = {'ran_at': datetime.now(config.DHAKA).isoformat(timespec='minutes'),
+               'trigger': os.environ.get('GITHUB_EVENT_NAME', 'local'), 'searches': n,
+               'credits': credits, 'results': len(results), 'new': len(new),
+               'already_stored': len(seen_again)}
+        conn.execute("""INSERT INTO index_info (key, value) VALUES ('search_sync', %s)
+                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""", (json.dumps(run),))
     print(f"searches {n} | credits {credits} | results {len(results)} | kept {len(new) + len(seen_again)} "
           f"| new {len(new)}{' (dry run, not saved)' if args.dry_run else ''} | already stored {len(seen_again)}"
           + (f" | saved {dict(saved)}" if saved else '')

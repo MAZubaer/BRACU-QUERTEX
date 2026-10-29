@@ -11,6 +11,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<!-- Vercel Web Analytics: anonymous page views, no cookies. The script is served by Vercel
+     only, so it isn't loaded on localhost. Enable it under the project's Analytics tab. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    const va = document.createElement('script');
+    va.defer = true;
+    va.src = '/_vercel/insights/script.js';
+    document.head.appendChild(va);
+  }
+</script>
 <style>
 :root {
   color-scheme: light dark;
@@ -329,7 +340,8 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
   <div class="notice">
     <strong>Not an official BRAC University service.</strong> Answers come from documents collected in October 2026 and can be
     wrong or out of date — always confirm decisions with the responsible office. Your questions are sent to an
-    AI provider (Groq, Google or OpenRouter) to write the answer; chats are not stored.
+    AI provider (Groq, Google or OpenRouter) to write the answer; chats are not stored. Anonymous page-view
+    statistics (Vercel Web Analytics, no cookies) show how the site is used.
   </div>
 </main>
 

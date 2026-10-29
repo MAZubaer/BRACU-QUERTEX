@@ -110,7 +110,8 @@ Each mode writes its own section of `eval/report.md`, so the synonym-only and pl
 3. **Environment variables** (Settings → Environment Variables): `DATABASE_URL` (pooled), `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `IP_HASH_SALT` (any random text), and any setting from `.env.example` you changed. Vercel needs neither `TAVILY_API_KEY` nor the unpooled URL: the live site only reads the database.
    - Alternative: add Neon from Vercel's **Storage / Marketplace** tab. It fills in `DATABASE_URL` for you. Then point your local `.env` at that database and run `ingest.py` against it.
 4. Click **Deploy**, then open `https://<project>.vercel.app/api/health`. Expect `"ok": true`, the chunk count (about 1,045 corpus chunks plus the announcements) and `"embedder": "loaded"` after the first question. `/api/announcements` lists the newest notices.
-5. Test on your phone. From now on, every `git push` redeploys.
+5. **Web Analytics:** in the Vercel project, open the **Analytics** tab and click **Enable**. The page already loads Vercel's script (`/_vercel/insights/script.js`, skipped on localhost). It counts page views, visitors, referrers, countries and devices, anonymously and without cookies. Data shows up after the next deploy and a few visits. The free Hobby plan includes page views; custom events need a paid plan.
+6. Test on your phone. From now on, every `git push` redeploys.
 
 **What to expect**
 - **Function size:** the bundle stays well under Vercel's 500 MB Python limit. `.vercelignore` keeps the corpus, data, scripts, tests and `.github/` out of the deployment.
@@ -159,6 +160,13 @@ python scripts/sync_search.py --dry-run                  # what it would add; st
 python scripts/sync_search.py --time-range month --max-searches 2
 ```
 The log shows every result kept or skipped and why (URLs only), and the credits used.
+
+**Is it working?**
+- **Failure emails:** GitHub emails you when a scheduled run fails. No email means it's running.
+- **Run history:** **Actions → Announcements search sync** lists every run with its time and ✅/❌.
+- **From the app:** `/api/health` shows `last_search_sync`: the time (Dhaka), the trigger (`schedule`, `workflow_dispatch` or `local`), searches, credits, results, new and already stored, for the last successful real run. Dry runs aren't recorded.
+- **Timing:** GitHub starts scheduled runs on a best-effort basis. They're often minutes late, sometimes hours on busy days or on a new schedule's first day, and occasionally skipped. For a run right now, use **Run workflow**.
+- **Inactivity:** in a public repo, GitHub turns scheduled workflows off after 60 days without any commit. If that happens, re-enable it on the Actions page.
 
 What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings are stripped first. It drops `/news/`, `/event/`, section and listing pages, other subdomains, files, and anything dated more than 60 days ago. Dates come from Tavily, else the snippet ("Publish Date: …"), else the title, else the day it was found (shown as "around <date>").
 
