@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="BRACU QUERTEX logo">
+  <defs>
+  <linearGradient id="qxdark-core" x1="0.15" y1="0.1" x2="0.85" y2="0.95"><stop offset="0" stop-color="#5B8DEF"/><stop offset="1" stop-color="#8F7CF6"/></linearGradient>
+  <radialGradient id="qxdark-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#5B8DEF" stop-opacity="0.45"/><stop offset="1" stop-color="#5B8DEF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="78" fill="url(#qxdark-glow)"/>
+  <path d="M100 20L169.3 60V140L100 180L30.7 140V60Z" fill="none" stroke="#E6EBFA" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M100 20V44M169.3 60L148.5 72M169.3 140L148.5 128M100 180V156M30.7 140L51.5 128M30.7 60L51.5 72" stroke="#E6EBFA" stroke-width="4" stroke-linecap="round"/>
+  <path d="M100 44L148.5 72V128L100 156L51.5 128V72Z" fill="url(#qxdark-core)" stroke="url(#qxdark-core)" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M100 44L148.5 72L100 100L51.5 72Z" fill="#FFFFFF" opacity="0.10"/>
+  <circle cx="100" cy="96" r="24" fill="none" stroke="#0A1022" stroke-width="9"/>
+  <path d="M116 112L132 128" stroke="#0A1022" stroke-width="9" stroke-linecap="round"/>
+  <g fill="#0A1022" stroke="#E6EBFA" stroke-width="5"><circle cx="100" cy="20" r="8"/><circle cx="169.3" cy="60" r="8"/><circle cx="169.3" cy="140" r="8"/><circle cx="100" cy="180" r="8"/><circle cx="30.7" cy="140" r="8"/><circle cx="30.7" cy="60" r="8"/></g>
+  <g fill="#6B7699"><circle cx="134.6" cy="40" r="3.5"/><circle cx="169.3" cy="100" r="3.5"/><circle cx="134.6" cy="160" r="3.5"/><circle cx="65.4" cy="160" r="3.5"/><circle cx="30.7" cy="100" r="3.5"/><circle cx="65.4" cy="40" r="3.5"/></g>
+</svg>

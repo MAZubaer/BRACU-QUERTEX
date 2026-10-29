@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/svg/quertex-q-horizontal-dark.svg">
+    <img src="brand/svg/quertex-q-horizontal-light.svg" alt="BRACU QUERTEX" height="80">
+  </picture>
+</p>
+
 # BRACU QUERTEX — FastAPI + pgvector
 
 A chatbot that answers BRAC University questions from 199 official documents and the university's latest announcements. It puts current rules first, cites its sources, flags drafts, and says when it doesn't know.

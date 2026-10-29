@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BRACU QUERTEX</title>
-<meta name="description" content="BRACU QUERTEX — unofficial student assistant that answers BRAC University questions from official documents, with sources.">
+<title>BRACU QUERTEX — Ask about BRAC University</title>
+<meta name="description" content="Ask about BRAC University rules, exams, fees, admissions and the latest notices. Answers come from university documents, with sources.">
+<!-- share preview (Facebook, WhatsApp, LinkedIn, X, Slack, Discord) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BRACU QUERTEX">
+<meta property="og:title" content="BRACU QUERTEX — Ask about BRAC University">
+<meta property="og:description" content="Ask about BRAC University rules, exams, fees, admissions and the latest notices. Answers come from university documents, with sources.">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="BRACU QUERTEX logo">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#eef3fb">
 <script>
   // Theme before the first paint (no flash): the saved choice, else the device setting.
@@ -15,7 +25,9 @@
     document.documentElement.dataset.theme = t;
   })();
 </script>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">
@@ -91,21 +103,42 @@ header {
   border-bottom: 1px solid var(--border);
 }
 .bar { max-width: 820px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
-.logo { width: 38px; height: 38px; perspective: 300px; flex: none; }
-.cube { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
-  transform: rotateX(-18deg) rotateY(32deg); transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-.logo:hover .cube, body.busy .cube { transform: rotateX(-18deg) rotateY(212deg); }
-body.busy .cube { animation: spin 2.4s linear infinite; }
-@keyframes spin { from { transform: rotateX(-18deg) rotateY(0); } to { transform: rotateX(-18deg) rotateY(360deg); } }
-.face { position: absolute; inset: 0; border-radius: 9px; display: grid; place-items: center; font-size: 19px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
-  border: 1px solid rgba(255,255,255,.25); backface-visibility: hidden; }
-.face.f1 { transform: translateZ(19px); }
-.face.f2 { transform: rotateY(90deg) translateZ(19px); filter: brightness(.82); }
-.face.f3 { transform: rotateY(180deg) translateZ(19px); filter: brightness(.9); }
-.face.f4 { transform: rotateY(-90deg) translateZ(19px); filter: brightness(.75); }
+/* logo mark: one image per theme, picked by <html data-theme> (set before the first paint: no flash) */
+.logomark { width: 44px; height: 44px; flex: none; display: block; }
+.logomark img { display: block; width: 44px; height: 44px; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.logomark .lm-dark { display: none; }
+[data-theme="dark"] .logomark .lm-light { display: none; }
+[data-theme="dark"] .logomark .lm-dark { display: block; }
+.logomark:hover img { transform: scale(1.06) rotate(-4deg); }
+body.busy .logomark img { animation: markpulse 1.4s ease-in-out infinite; }
+@keyframes markpulse { 50% { transform: scale(1.08); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 60%, transparent)); } }
 .brand { font-family: var(--display); font-weight: 700; font-size: 16.5px; letter-spacing: -.01em; line-height: 1.25; }
 .brand small { display: block; font-family: system-ui, sans-serif; font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 0; }
+
+/* load-in: logo and text both start hidden at the gap between them, then move apart.
+   Transforms, opacity and clip-path only (no layout shift); fill-mode both so nothing shows
+   before it starts. On the wrapper, not the per-theme <img>s: their display flips on a theme
+   toggle and that would restart an animation. It plays once per page load. */
+.intro-logo { animation: introLogo 700ms cubic-bezier(.22, 1, .36, 1) both; }
+.intro-text { animation: introText 700ms cubic-bezier(.22, 1, .36, 1) 120ms both; }
+/* the subtitle only reveals: sliding it further left would push its first letters past the
+   title block's clip edge ("Answers" would appear from the middle) */
+.intro-text small { animation: introReveal 700ms cubic-bezier(.22, 1, .36, 1) 220ms both; }
+@keyframes introLogo {
+  from { transform: translateX(24px) scale(.4) rotate(-60deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes introText {
+  from { transform: translateX(-24px); opacity: 0; clip-path: inset(0 100% 0 0); }
+  to   { transform: none; opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes introReveal {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to   { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-logo, .intro-text, .intro-text small { animation: none; }
+}
 .bar .spacer { flex: 1; }
 .status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted);
   padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
@@ -383,10 +416,11 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
 
 <header>
   <div class="bar">
-    <div class="logo" aria-hidden="true"><div class="cube">
-      <div class="face f1">🎓</div><div class="face f2"></div><div class="face f3">🎓</div><div class="face f4"></div>
-    </div></div>
-    <div class="brand">BRACU QUERTEX<small>Unofficial student project · answers from university documents</small></div>
+    <span class="logomark intro-logo" aria-hidden="true">
+      <img class="lm-light" src="/quertex-mark-light.svg" alt="" width="44" height="44">
+      <img class="lm-dark" src="/quertex-mark-dark.svg" alt="" width="44" height="44">
+    </span>
+    <div class="brand intro-text">BRACU QUERTEX<small>Answers from BRACU documents</small></div>
     <div class="spacer"></div>
     <span class="status" id="status" role="status">Ready</span>
     <button class="theme-switch" id="theme" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
