@@ -215,7 +215,7 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | `bracu/embedder.py` | e5-small with onnxruntime; falls back to keyword-only search if the model is missing |
 | `bracu/llm.py`, `bracu/prompts.py`, `bracu/rag.py` | Provider fallback chain; system prompt, today's date, `[past]` marks and announcement labels; glue |
 | `bracu/config.py`, `bracu/guard.py`, `bracu/db.py` | Settings, rate limits, feedback, database connection |
-| `public/index.html` | Chat page: streaming, clickable [S1] citations, status badges, 👍/👎, light/dark, glass UI, Latest notices panel |
+| `public/index.html` | Chat page: streaming, clickable [S1] citations, status badges, 👍/👎, glass UI, Latest notices panel. Light/dark: follows the device until someone uses the sun/moon switch in the header (remembered in that browser; Shift+click follows the device again) |
 | `public/scene3d.js` | 3D background (Three.js from jsDelivr): the 199 documents orbit a core; the passages sent to the AI fly forward in their status colour (same colours as the badges), and once the answer is done only the cited ones stay, matching the Sources list. Optional: the page works without WebGL, and shows still frames with reduced motion |
 | `sql/schema.sql` | Tables: chunks, bm25_postings, bm25_terms, index_info, announcements, feedback, rate_limits; `refresh_bm25_stats()` |
 | `scripts/ingest.py`, `scripts/chunker.py`, `scripts/fetch_model.py` | Build the corpus index, download the model |

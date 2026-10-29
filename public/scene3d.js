@@ -67,6 +67,8 @@ function glowTexture() {
 function start(canvas) {
   const reduceQ = matchMedia('(prefers-reduced-motion: reduce)');
   const darkQ = matchMedia('(prefers-color-scheme: dark)');
+  // the page's theme switch sets <html data-theme>; without it, follow the device
+  const isDark = () => (document.documentElement.dataset.theme || (darkQ.matches ? 'dark' : 'light')) === 'dark';
   const isSmall = () => innerWidth < 700;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true,
@@ -164,8 +166,8 @@ function start(canvas) {
   let C = COLORS.dark;
   const tmpColor = new THREE.Color(), tintColor = new THREE.Color(), hiColor = new THREE.Color();
   function applyTheme() {
-    C = darkQ.matches ? COLORS.dark : COLORS.light;
-    const dark = darkQ.matches;
+    const dark = isDark();
+    C = dark ? COLORS.dark : COLORS.light;
     scene.fog = new THREE.Fog(C.fog, 13, 30);
     coreMat.color.set(C.coreBody);
     coreMat.emissive.set(C.core);
@@ -380,6 +382,7 @@ function start(canvas) {
   document.addEventListener('visibilitychange', setRunning);
   reduceQ.addEventListener?.('change', setRunning);
   darkQ.addEventListener?.('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   applyTheme();
   resize();
