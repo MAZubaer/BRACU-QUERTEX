@@ -83,6 +83,13 @@ def cited_numbers(answer):
     return sorted({int(n) for n in re.findall(r'[\[【]\s*S(\d+)\s*[\]】]', answer)})
 
 
+def plain_excerpt(text, limit=400):
+    """The passage as plain text for the page: no markdown heading marks, bold or code ticks."""
+    t = re.sub(r'(?m)^\s*#{1,6}\s*', '', text)
+    t = re.sub(r'[*`]+|(?<!\w)_(?!\w)', '', t)
+    return ' '.join(t.split())[:limit]
+
+
 def source_card(n, c):
     """What the web page shows for source [Sn] (no passage text by default)."""
     return {
@@ -90,7 +97,7 @@ def source_card(n, c):
         'title': c['title'], 'section': c['section'], 'status': c['status'],
         'status_label': STATUS_LABEL.get(c['status'], c['status']),
         'approved_on': c.get('approved_on') or '', 'url': c.get('url') or '',
-        'file': c.get('file') or '', 'excerpt': ' '.join(c['text'].split())[:400],
+        'excerpt': plain_excerpt(c['text']),
         'added_reason': c.get('added_reason', ''),
         **({'published': c['published_at'].isoformat() if c.get('published_at') else '',
             'date_source': c.get('date_source') or '', 'link_only': not c.get('full_text'),

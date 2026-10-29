@@ -578,8 +578,7 @@ function sourceCards(bubble, sources, cited, searched) {
     ? `<div class="searched">Searched for: ${queries.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div>` : '';
   d.innerHTML = `<summary>Sources (${show.length})</summary>` + chips + '<div class="srcs">' + show.map((s, i) => {
     const [cls, label, stripe] = BADGES[s.status] || ['b-undated', s.status_label, 's-undated'];
-    const link = s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">Open page ↗</a>`
-                       : `<span>${esc(s.file.replace(/\\/g, '/'))}</span>`;
+    const link = s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">Open page ↗</a>` : '';
     return `<div class="src ${stripe}" style="--i:${i}" id="src-${bubble.dataset.turn}-${s.n}">
       <div><span class="t">[S${s.n}] ${esc(s.title)}</span> <span class="s">— ${esc(s.section)}</span></div>
       <div class="row"><span class="badge ${cls}">${label}</span>
