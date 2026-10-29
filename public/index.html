@@ -9,20 +9,31 @@
 <link rel="canonical" href="https://bracu-quertex.vercel.app/">
 <meta name="application-name" content="Bracu Quertex">
 <meta name="apple-mobile-web-app-title" content="Bracu Quertex">
-<!-- share preview (Facebook, WhatsApp, LinkedIn, X, Slack, Discord); image URLs must be absolute -->
+<!-- share preview (Messenger, WhatsApp, Facebook, LinkedIn, X, Discord, Telegram). Must stay in the
+     raw HTML (crawlers don't run JavaScript) with absolute https URLs. The wide image comes first. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bracu Quertex">
 <meta property="og:url" content="https://bracu-quertex.vercel.app/">
 <meta property="og:title" content="Bracu Quertex — AI assistant for BRAC University students">
-<meta property="og:description" content="Bracu Quertex answers questions about BRAC University: rules, courses, exams, tuition fees, admission and the latest announcements, with sources. Independent student project.">
+<meta property="og:description" content="Ask anything about BRAC University: rules, courses, exams, fees, admission and the latest notices. Answers cite their sources. Independent student project.">
+<meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://bracu-quertex.vercel.app/og-image.png">
+<meta property="og:image:secure_url" content="https://bracu-quertex.vercel.app/og-image.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Bracu Quertex — AI assistant for BRAC University students">
+<meta property="og:image:alt" content="BRACU QUERTEX logo with the tagline: Ask anything about BRAC University. Answers with sources">
+<meta property="og:image" content="https://bracu-quertex.vercel.app/og-image-square.png">
+<meta property="og:image:secure_url" content="https://bracu-quertex.vercel.app/og-image-square.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<meta property="og:image:alt" content="BRACU QUERTEX logo with the tagline: Ask anything about BRAC University. Answers with sources">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bracu Quertex — AI assistant for BRAC University students">
-<meta name="twitter:description" content="Bracu Quertex answers questions about BRAC University: rules, courses, exams, tuition fees, admission and the latest announcements, with sources. Independent student project.">
+<meta name="twitter:description" content="Ask anything about BRAC University: rules, courses, exams, fees, admission and the latest notices. Answers cite their sources. Independent student project.">
 <meta name="twitter:image" content="https://bracu-quertex.vercel.app/og-image.png">
+<meta name="twitter:image:alt" content="BRACU QUERTEX logo with the tagline: Ask anything about BRAC University. Answers with sources">
 <!-- the site name Google shows in results -->
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "WebSite", "name": "Bracu Quertex",
@@ -38,9 +49,11 @@
     document.documentElement.dataset.theme = t;
   })();
 </script>
-<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">

@@ -12,6 +12,7 @@ Endpoints
   GET  /api/health     database, index and provider status
 """
 import json
+import mimetypes
 import threading
 from pathlib import Path
 from typing import List, Literal, Optional
@@ -151,5 +152,7 @@ def health():
 # The chat page. On Vercel, files in public/ are served by the CDN directly;
 # this mount makes the same page work with `uvicorn app:app` on your PC.
 PUBLIC = Path(__file__).parent / 'public'
+mimetypes.add_type('application/manifest+json', '.webmanifest')   # same as vercel.json sets
+mimetypes.add_type('image/x-icon', '.ico')
 if PUBLIC.exists():
     app.mount('/', StaticFiles(directory=PUBLIC, html=True), name='public')

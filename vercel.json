@@ -1,4 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"]
+  "regions": ["sin1"],
+  "headers": [
+    { "source": "/site.webmanifest", "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }] },
+    { "source": "/favicon.ico", "headers": [{ "key": "Content-Type", "value": "image/x-icon" }] }
+  ]
 }
