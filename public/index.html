@@ -3,18 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BRACU QUERTEX — Ask about BRAC University</title>
-<meta name="description" content="Ask about BRAC University rules, exams, fees, admissions and the latest notices. Answers come from university documents, with sources.">
-<!-- share preview (Facebook, WhatsApp, LinkedIn, X, Slack, Discord) -->
+<title>Bracu Quertex — AI assistant for BRAC University students</title>
+<meta name="description" content="Bracu Quertex answers questions about BRAC University: rules, courses, exams, tuition fees, admission and the latest announcements, with sources. Independent student project.">
+<meta name="google-site-verification" content="7NGQSyqaTM0kA3vSTSSZkJZx2jj-5pCBWun9PnwIVIE" />
+<link rel="canonical" href="https://bracu-quertex.vercel.app/">
+<meta name="application-name" content="Bracu Quertex">
+<meta name="apple-mobile-web-app-title" content="Bracu Quertex">
+<!-- share preview (Facebook, WhatsApp, LinkedIn, X, Slack, Discord); image URLs must be absolute -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="BRACU QUERTEX">
-<meta property="og:title" content="BRACU QUERTEX — Ask about BRAC University">
-<meta property="og:description" content="Ask about BRAC University rules, exams, fees, admissions and the latest notices. Answers come from university documents, with sources.">
-<meta property="og:image" content="/og-image.png">
+<meta property="og:site_name" content="Bracu Quertex">
+<meta property="og:url" content="https://bracu-quertex.vercel.app/">
+<meta property="og:title" content="Bracu Quertex — AI assistant for BRAC University students">
+<meta property="og:description" content="Bracu Quertex answers questions about BRAC University: rules, courses, exams, tuition fees, admission and the latest announcements, with sources. Independent student project.">
+<meta property="og:image" content="https://bracu-quertex.vercel.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="BRACU QUERTEX logo">
+<meta property="og:image:alt" content="Bracu Quertex — AI assistant for BRAC University students">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bracu Quertex — AI assistant for BRAC University students">
+<meta name="twitter:description" content="Bracu Quertex answers questions about BRAC University: rules, courses, exams, tuition fees, admission and the latest announcements, with sources. Independent student project.">
+<meta name="twitter:image" content="https://bracu-quertex.vercel.app/og-image.png">
+<!-- the site name Google shows in results -->
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "WebSite", "name": "Bracu Quertex",
+ "alternateName": "Quertex", "url": "https://bracu-quertex.vercel.app/"}
+</script>
 <meta name="theme-color" content="#eef3fb">
 <script>
   // Theme before the first paint (no flash): the saved choice, else the device setting.
@@ -112,7 +125,7 @@ header {
 .logomark:hover img { transform: scale(1.06) rotate(-4deg); }
 body.busy .logomark img { animation: markpulse 1.4s ease-in-out infinite; }
 @keyframes markpulse { 50% { transform: scale(1.08); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 60%, transparent)); } }
-.brand { font-family: var(--display); font-weight: 700; font-size: 16.5px; letter-spacing: -.01em; line-height: 1.25; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 16.5px; letter-spacing: -.01em; line-height: 1.25; white-space: nowrap; }
 .brand small { display: block; font-family: system-ui, sans-serif; font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 0; }
 
 /* load-in: logo and text both start hidden at the gap between them, then move apart.
@@ -140,8 +153,9 @@ body.busy .logomark img { animation: markpulse 1.4s ease-in-out infinite; }
   .intro-logo, .intro-text, .intro-text small { animation: none; }
 }
 .bar .spacer { flex: 1; }
-.status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted);
-  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; line-height: 1; color: var(--muted);
+  height: 32px; padding: 0 12px; flex: none;               /* same height as the theme switch */
+  border-radius: 999px; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
 .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent); }
 .status.busy::before { background: var(--accent); animation: ping 1s ease-in-out infinite; }
@@ -150,7 +164,7 @@ body.busy .logomark img { animation: markpulse 1.4s ease-in-out infinite; }
 .iconbtn {
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
   border-radius: 12px; padding: 7px 12px; font-size: 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center;
-  transition: transform .15s, border-color .15s;
+  transition: transform .15s, border-color .15s; white-space: nowrap; flex: none;
 }
 .iconbtn:hover { border-color: var(--accent); transform: translateY(-1px); }
 
@@ -281,6 +295,12 @@ main { flex: 1; width: 100%; max-width: 820px; margin: 0 auto; padding: 16px 16p
   padding: 0 7px; border-radius: 999px; white-space: nowrap; vertical-align: 1px; background: var(--grey-bg); color: var(--grey); }
 .pill.unconfirmed { background: var(--amber-bg); color: var(--amber); }
 
+/* "What is Bracu Quertex?": plain crawlable text, quiet so it never competes with the chat */
+.about { margin: 18px auto 0; max-width: 620px; text-align: left; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.about h2 { font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+.about p { margin: 0 0 6px; }
+.about .about-note { font-size: 12.5px; }
+
 /* ---------- messages */
 .msg { display: flex; gap: 10px; margin: 16px 0; animation: rise .55s cubic-bezier(.2,.8,.2,1) both; }
 .msg.user { justify-content: flex-end; }
@@ -406,6 +426,15 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
   .latest li { flex-direction: column; gap: 1px; }
   .latest time { min-width: 0; }
 }
+@media (max-width: 420px) {   /* keep the header on one line on small phones */
+  .bar { gap: 8px; padding: 10px 12px; }
+  .logomark, .logomark img { width: 36px; height: 36px; }
+  .iconbtn { padding: 7px 10px; }
+}
+@media (max-width: 380px) {   /* icon only; the label stays for screen readers */
+  .iconbtn { padding: 10px 11px; }
+  .iconbtn .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
@@ -420,7 +449,7 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
       <img class="lm-light" src="/quertex-mark-light.svg" alt="" width="44" height="44">
       <img class="lm-dark" src="/quertex-mark-dark.svg" alt="" width="44" height="44">
     </span>
-    <div class="brand intro-text">BRACU QUERTEX<small>Answers from BRACU documents</small></div>
+    <div class="brand intro-text">Bracu Quertex<small>Answers from BRACU documents</small></div>
     <div class="spacer"></div>
     <span class="status" id="status" role="status">Ready</span>
     <button class="theme-switch" id="theme" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
@@ -430,7 +459,7 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
       <span class="ts-knob" aria-hidden="true"><span class="ts-crater"></span><span class="ts-crater"></span><span class="ts-crater"></span></span>
     </button>
     <button class="iconbtn" id="clear" type="button" title="Start a new chat">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-label">New chat</span>
     </button>
   </div>
 </header>
@@ -439,20 +468,27 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
   <section class="empty" id="empty">
     <div class="hero">
       <div class="eyebrow">✦ 199 official documents · current rules first</div>
-      <h1>Ask about BRAC University</h1>
-      <p class="lead">Rules, exams, fees, admissions, conduct, transport and more — in English or বাংলা. Every answer shows its sources.</p>
+      <h1>Bracu Quertex</h1>
+      <p class="lead">Ask about BRAC University rules, exams, fees, admissions, conduct, transport and more — in English or বাংলা. Every answer shows its sources.</p>
     </div>
     <div class="examples" id="examples"></div>
     <section class="latest" id="latest" hidden aria-labelledby="latest-h">
       <h2 id="latest-h">Latest notices</h2>
       <ul id="latest-list"></ul>
     </section>
+    <section class="about" aria-labelledby="about-h">
+      <h2 id="about-h">What is Bracu Quertex?</h2>
+      <p>Bracu Quertex is an AI assistant that answers questions about BRAC University: academic rules, courses,
+        exams, tuition fees, admission, student services and the latest announcements. Every answer is drawn
+        from university documents and cites its sources, so you can check them. Ask in English or Bangla (বাংলা).</p>
+      <p class="about-note">Independent student project, not an official BRAC University service.</p>
+    </section>
   </section>
   <div id="chat" aria-live="polite"></div>
   <div class="notice">
     Answers come from documents collected in October 2026 and can be wrong or out of date. For important or
     sensitive matters, always confirm decisions with the responsible office. Chats aren’t stored. You can rate
-    any answer with 👍/👎; when you do, that question and answer are saved anonymously to help improve Quertex.
+    any answer with 👍/👎; when you do, that question and answer are saved anonymously to help improve Bracu Quertex.
   </div>
 </main>
 

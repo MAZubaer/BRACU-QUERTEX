@@ -1,4 +1,4 @@
-"""BRACU QUERTEX — FastAPI app.
+"""Bracu Quertex — FastAPI app.
 
 Local:   uvicorn app:app --reload        then open http://localhost:8000
 Vercel:  detected automatically (FastAPI instance named `app` in app.py).
@@ -28,7 +28,7 @@ from bracu.guard import check_rate_limit, client_key, save_feedback
 from bracu.rag import ask, cited_numbers, source_card
 from bracu.retriever import index_info, latest_announcements
 
-app = FastAPI(title='BRACU QUERTEX API', docs_url='/api/docs', openapi_url='/api/openapi.json')
+app = FastAPI(title='Bracu Quertex API', docs_url='/api/docs', openapi_url='/api/openapi.json')
 
 if config.ALLOWED_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.ALLOWED_ORIGINS,
@@ -137,7 +137,7 @@ def announcements(limit: int = Query(5, ge=1, le=20)):
 
 @app.get('/api/health')
 def health():
-    out = {'app': 'BRACU QUERTEX', 'ok': True, 'embedder': embedder_status(),
+    out = {'app': 'Bracu Quertex', 'ok': True, 'embedder': embedder_status(),
            'providers': [{'provider': p, 'model': m, 'has_key': ok} for p, m, ok in llm.available()]}
     try:
         info = index_info()

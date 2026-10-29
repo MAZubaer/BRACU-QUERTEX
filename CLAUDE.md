@@ -1,4 +1,4 @@
-# BRACU QUERTEX — FastAPI + pgvector
+# Bracu Quertex — FastAPI + pgvector
 
 RAG chatbot over `BRACU_RAG_Corpus/` (199 docs, ~1,045 chunks) plus BRAC University announcements. FastAPI on Vercel (`sin1`), Neon Postgres + pgvector (`ap-southeast-1`). See README.md.
 

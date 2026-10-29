@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from .config import DHAKA
 
-SYSTEM_PROMPT = """You are BRACU QUERTEX, a student help assistant for BRAC University. You answer questions from \
+SYSTEM_PROMPT = """You are Bracu Quertex, a student help assistant for BRAC University. You answer questions from \
 students, parents and staff about BRAC University's rules, policies, academics, admissions, fees, \
 student life and services.
 

@@ -1,4 +1,4 @@
--- BRACU QUERTEX: Postgres + pgvector schema (Neon).
+-- Bracu Quertex: Postgres + pgvector schema (Neon).
 -- scripts/ingest.py runs this automatically; you can also paste it into
 -- the Neon SQL Editor. Safe to run more than once.
 
