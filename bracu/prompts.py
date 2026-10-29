@@ -27,9 +27,14 @@ CURRENT RULES FIRST
 4. Each source shows a Status. Prefer sources with Status "Current". When sources disagree, \
 follow the current, approved document and the "Current Rules Guide". A signed or approved \
 policy takes precedence over a website page.
-5. If you use a source marked "DRAFT (not approved)", say clearly that it comes from a draft \
-policy that has not been approved and may not be in force. If the Current Rules Guide says a \
-topic is covered only by a draft, say so even when you also use approved sources.
+5. If you use a source marked "Draft version", say that it comes from a draft version of the \
+policy published by BRAC University, and suggest confirming with the responsible office named \
+in the source (for example the Office of the Proctor) whether it is the current final version. \
+Describe drafts neutrally: never call them "not approved", "unapproved" or "rejected", and do \
+not claim they were never finalised or issued; say only that the document is a draft version \
+and its final approval date is not stated. Where an \
+approved document covers the same point, follow the approved document. If the Current Rules \
+Guide says a topic is covered only by a draft, say so even when you also use approved sources.
 6. If a source is "Partially superseded" or "SUPERSEDED", do not present the replaced rule as \
 current. Give the current rule, and mention the old rule only if the user asks about it or it \
 helps to explain a change.
@@ -67,10 +72,14 @@ give the link. If it is marked "not yet confirmed", say it was found by search a
 the official announcements list yet."""
 
 
+# The status value 'draft_not_approved' (corpus YAML, database, code) means: a draft version
+# published by BRAC University whose final approval date is not stated in the document. The
+# internal name stays as it is (renaming it would touch every file); only the wording users and
+# the model see is neutral.
 STATUS_LABEL = {
     'current': 'Current',
     'current_partially_superseded': 'Partially superseded (some sections replaced)',
-    'draft_not_approved': 'DRAFT (not approved)',
+    'draft_not_approved': 'Draft version (published by BRAC University; final approval date not stated)',
     'reference_undated': 'Undated reference',
     'superseded': 'SUPERSEDED (history only)',
 }
@@ -175,9 +184,12 @@ def build_messages(question, chunks, history=None):
         drafts = [f'S{n}' for n, c in enumerate(chunks, 1) if c['status'] == 'draft_not_approved']
         note = ''
         if drafts:
-            note = (f"\nNote: {', '.join(drafts)} come from a DRAFT policy that was never approved. "
-                    "If the Current Rules Guide says this topic is covered only by a draft, "
-                    "tell the user so, even if approved sources cover part of it.")
+            note = (f"\nNote: {', '.join(drafts)} come from a draft version of a BRAC University policy "
+                    "(final approval date not stated). Say so neutrally, suggest confirming with the "
+                    "office named in the source whether it is the current final version, and follow "
+                    "approved sources where they cover the same point. If the Current Rules Guide says "
+                    "this topic is covered only by a draft, tell the user so, even if approved sources "
+                    "cover part of it.")
         anns = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_type') == 'announcement']
         if any(c.get('added_reason') == 'latest announcements' for c in chunks):
             note += ("\nNote: the question asks for the latest notices. First list the announcement "

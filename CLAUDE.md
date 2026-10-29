@@ -35,7 +35,8 @@ RAG chatbot over `BRACU_RAG_Corpus/` (199 docs, ~1,045 chunks) plus BRAC Univers
 - `ingest.py` replaces only `origin='corpus'` rows; it must keep announcement rows (ids ≥ 1,000,000) and their postings. BM25 statistics come only from `refresh_bm25_stats()`.
 - Sync and import packages (`tavily-python`, `beautifulsoup4`, `lxml`, PyYAML for the store) stay in `requirements-sync.txt`, never in `requirements.txt`.
 - Keep corpus YAML front matter (`doc_id`, `status`, `rag_priority`, `superseded_by`). `00_START_HERE/current_rules_guide.md` decides conflicts.
-- Answers must stay grounded: cite sources, prefer current rules, label drafts, say "not found" instead of guessing; link-only announcements: only their title/snippet, always the link. Don't weaken `prompts.py`.
+- Drafts: the status `draft_not_approved` means a draft version published by BRAC University whose final approval date is not stated. Word it neutrally everywhere users or the model see it ("Draft version"; never "not approved", "unapproved" or "rejected"); keep the internal value as it is. Approved documents still take priority on the same point.
+- Answers must stay grounded: cite sources, prefer current rules, label draft versions, say "not found" instead of guessing; link-only announcements: only their title/snippet, always the link. Don't weaken `prompts.py`.
 - Passages and questions must be embedded by the same `Embedder`; changing the model means re-running ingest.
 - After changing retrieval, chunking or announcement code, run `python eval/evaluate.py` and `python -m unittest discover -s tests`.
 - Synonyms apply to questions at search time only; never put them in `bracu/text.py` (the BM25 postings in Postgres are built with it).

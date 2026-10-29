@@ -450,10 +450,9 @@ textarea:focus-visible { outline: none; }   /* the whole composer glows instead 
   </section>
   <div id="chat" aria-live="polite"></div>
   <div class="notice">
-    <strong>Not an official BRAC University service.</strong> Answers come from documents collected in October 2026 and can be
-    wrong or out of date — always confirm decisions with the responsible office. Your questions are sent to an
-    AI provider (Groq, Google or OpenRouter) to write the answer; chats are not stored. Anonymous page-view
-    statistics (Vercel Web Analytics, no cookies) show how the site is used.
+    Answers come from documents collected in October 2026 and can be wrong or out of date. For important or
+    sensitive matters, always confirm decisions with the responsible office. Chats aren’t stored. You can rate
+    any answer with 👍/👎; when you do, that question and answer are saved anonymously to help improve Quertex.
   </div>
 </main>
 
@@ -483,7 +482,7 @@ const EXAMPLES = [
 const BADGES = {
   current: ['b-current', 'Current', 's-current'],
   current_partially_superseded: ['b-partial', 'Partly replaced', 's-partial'],
-  draft_not_approved: ['b-draft', 'Draft — not approved', 's-draft'],
+  draft_not_approved: ['b-draft', 'Draft version by BRACU', 's-draft'],
   reference_undated: ['b-undated', 'Undated', 's-undated'],
   superseded: ['b-superseded', 'Superseded (history)', 's-superseded'],
 };

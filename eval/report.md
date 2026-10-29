@@ -23,7 +23,7 @@ Search mode: **hybrid**, top-k = 5
 | q04 | fact | hit (rank 1) |  | Within how many days must a disciplinary fine be paid? | Within how many days must a disciplinary fine be paid? penalty |
 | q05 | fact | hit (rank 1) |  | How long do I have to appeal a non-academic disciplinary decision, and to whom? |  |
 | q06 | fact | hit (rank 1) |  | How long are disciplinary records kept on a student's file? |  |
-| q07 | fact | hit (rank 3) |  | What are the penalty levels for non-academic misconduct? | What are the penalty levels for non-academic misconduct? fine |
+| q07 | fact | hit (rank 4) |  | What are the penalty levels for non-academic misconduct? | What are the penalty levels for non-academic misconduct? fine |
 | q08 | fact | hit (rank 1) |  | How do I report sexual harassment and within what time? |  |
 | q09 | fact | hit (rank 1) |  | How many members does SHEBREC have and who chairs it? |  |
 | q10 | fact | hit (rank 1) |  | How long should a SHEBREC harassment case take to complete? |  |
@@ -79,13 +79,13 @@ Search mode: **hybrid**, top-k = 5
 
 - Retrieval hit@5: **2/2 (100%)**
 - MRR: 1.00
-  - announcement: 2/2 (100%)
+  - draft: 2/2 (100%)
 - Answers containing the expected facts: **2/2 (100%)**
 
 | id | type | retrieval | answer | question | also searched |
 |---|---|---|---|---|---|
-| q52 | announcement | hit (rank 1) | ok | What are the latest announcements? |  |
-| q53 | announcement | hit (rank 1) | ok | When is the LLB mid-term for Fall 2026? |  |
+| q38 | draft | hit (rank 1) | ok | What support does the university provide for students with disabilities? |  |
+| q39 | draft | hit (rank 1) | ok | Does BRAC University have a gender policy? |  |
 <!-- /mode: synonyms + answers -->
 
 <!-- mode: planner -->

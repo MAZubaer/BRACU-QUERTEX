@@ -7,7 +7,7 @@
 
 # BRACU QUERTEX — FastAPI + pgvector
 
-A chatbot that answers BRAC University questions from 199 official documents and the university's latest announcements. It puts current rules first, cites its sources, flags drafts, and says when it doesn't know.
+A chatbot that answers BRAC University questions from 199 official documents and the university's latest announcements. It puts current rules first, cites its sources, labels draft versions (policies published by BRAC University without a stated final approval date), and says when it doesn't know.
 
 This is the web version of the original Streamlit prototype:
 
