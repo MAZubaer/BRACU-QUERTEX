@@ -32,7 +32,8 @@ from bracu.rag import plan_search           # noqa: E402
 NUMBER_WORDS = {'7': 'seven', '10': 'ten', '14': 'fourteen', '15': 'fifteen', '30': 'thirty'}
 # gpt-oss often writes no-break spaces and non-breaking hyphens ("Level 1", "Vice‑Chancellor")
 ODD_CHARS = str.maketrans({' ': ' ', ' ': ' ', ' ': ' ', ' ': ' ',
-                           '‐': '-', '‑': '-', '‒': '-', '–': '-', '—': '-'})
+                           '‐': '-', '‑': '-', '‒': '-', '–': '-', '—': '-',
+                           '’': "'", '‘': "'"})             # "couldn’t find"
 
 
 def normalize(text):

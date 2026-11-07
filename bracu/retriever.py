@@ -21,7 +21,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import timedelta
 
-from . import config, db
+from . import config, db, eligibility
 from .embedder import get_embedder, to_pgvector
 from .text import tokenize
 
@@ -41,7 +41,7 @@ ANNOUNCEMENT_COLUMNS = ('date_source', 'full_text', 'listed')   # from the annou
 # Announcements (doc_type 'announcement') rank by age; corpus documents are unchanged.
 # Older than a year they are left out like superseded documents (unless history).
 RECENT_DAYS, OLD_DAYS = 90, 365
-RECENT_WEIGHT, AGING_WEIGHT, UNCONFIRMED_WEIGHT = 1.1, 0.8, 0.9
+RECENT_WEIGHT, AGING_WEIGHT = 1.1, 0.8
 # "Latest notices" questions also get the newest announcements by date.
 NOTICE_WORDS = re.compile(r'\b(notices?|announcements?|circulars?)\b|নোটিশ|ঘোষণা|বিজ্ঞপ্তি', re.I)
 RECENT_WORDS = re.compile(r'\b(latest|recent|recently|new|newest|today|this\s+week|upcoming)\b|'
@@ -77,13 +77,12 @@ def wants_latest(texts):
 
 def announcement_weight(c, today):
     """(weight, too_old) for an announcement chunk: x1.1 under 90 days, x0.8 up to
-    a year, older = like superseded; x0.9 more while not confirmed on the
-    announcements listing (listed=false)."""
+    a year, older = like superseded. Every post found on the university site
+    counts the same, however it was found."""
     age = (today - c['published_at']).days if c['published_at'] else 0
     if age > OLD_DAYS:
         return 1.0, True
-    w = RECENT_WEIGHT if age < RECENT_DAYS else AGING_WEIGHT
-    return (w * UNCONFIRMED_WEIGHT if c['listed'] is False else w), False
+    return (RECENT_WEIGHT if age < RECENT_DAYS else AGING_WEIGHT), False
 
 
 class Retriever:
@@ -275,16 +274,20 @@ class Retriever:
                                     -c['published_at'].toordinal() if c.get('published_at') else 0))
         if guide is not None and guide in rows:
             out.append({**rows[guide], 'score': 0.0, 'added_reason': 'rules guide'})
+        # "I've finished CSE 110 and 111, what can I take next?": the computed check goes first
+        card = eligibility.card_for(query) if config.ELIGIBILITY_CHECK else None
+        if card:
+            out.insert(0, card)
         return out
 
 
 def latest_announcements(limit=5):
-    """For /api/announcements and the "Latest notices" panel: posts confirmed on
-    the announcements listing first, then provisional (search) ones; last year only."""
+    """For /api/announcements and the "Latest notices" panel: the newest posts by
+    date, however they were found; last year only."""
     rows = db.fetchall("""
         SELECT title, published_at, date_source, url, full_text, listed FROM announcements
         WHERE published_at IS NULL OR published_at >= %s
-        ORDER BY listed DESC, published_at DESC NULLS LAST, url LIMIT %s""",
+        ORDER BY published_at DESC NULLS LAST, url LIMIT %s""",
                        (config.today() - timedelta(days=OLD_DAYS), limit))
     return [{'title': t, 'date': d.isoformat() if d else None, 'date_source': ds, 'url': u,
              'full_text': ft, 'listed': li} for t, d, ds, u, ft, li in rows]

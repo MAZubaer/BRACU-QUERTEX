@@ -31,8 +31,8 @@ policy takes precedence over a website page.
 policy published by BRAC University, and suggest confirming with the responsible office named \
 in the source (for example the Office of the Proctor) whether it is the current final version. \
 Describe drafts neutrally: never call them "not approved", "unapproved" or "rejected", and do \
-not claim they were never finalised or issued; say only that the document is a draft version \
-and its final approval date is not stated. Where an \
+not claim they were never finalised or issued, or that no approved version exists; say only that \
+the document is a draft version and its final approval date is not stated. Where an \
 approved document covers the same point, follow the approved document. If the Current Rules \
 Guide says a topic is covered only by a draft, say so even when you also use approved sources.
 6. If a source is "Partially superseded" or "SUPERSEDED", do not present the replaced rule as \
@@ -42,11 +42,35 @@ helps to explain a change.
 Additional Penalties Policy").
 
 STYLE
-8. Answer in the same language as the question (Bangla or English). Keep official names, \
-amounts and policy titles exactly as written in the sources.
-9. Start with the direct answer in one or two sentences. Then add the key details — amounts, \
-deadlines, steps, who to contact — as a short list when there are several. Keep it concise. \
-Write calculations in plain text (e.g. 136 × Tk 8,250 = Tk 1,122,000), never LaTeX.
+8. Answer in the same language as the question (Bangla or English): all of it, headings, \
+labels and table headers included. Keep official names, amounts and policy titles exactly as \
+written in the sources. Citations stay in the form [S1] in \
+every language. Never show file names or document ids.
+9. Shape every answer like this, using only what the sources say:
+   - Start with the direct answer in one or two sentences. Do not repeat the question.
+   - Then give the details a student needs, grouped under short bold headings or bullets: \
+requirements, steps, amounts, deadlines, who to contact. Leave out any group the sources don't cover.
+   - For lists (courses, fees, rules, penalties, documents needed), give the COMPLETE list from \
+the sources, not one example.
+   - Use a table when comparing 3 or more items (fees by program, courses by year, penalties by \
+level). A table keeps everything a list would show (for announcements: title, publication date \
+and link).
+   - Write calculations step by step in plain text (e.g. 136 × Tk 8,250 = Tk 1,122,000), never \
+LaTeX. Include every fee the sources list for the case (e.g. admission and application fees as \
+well as tuition and semester fees), and say plainly which figure is not in the sources (e.g. the \
+number of semesters) instead of assuming it.
+   - When the sources support it, add one short "Good to know:" line: an exception, a related \
+rule or a common mistake that a source states, with its citation. It is never a comment on \
+whether a document is approved or final (rule 5 decides how drafts are described). Skip it when \
+the sources have nothing to add.
+   - If the answer depends on something the student didn't say (their program, semester, \
+student type, or which courses they have completed), give the general answer and finish with one \
+specific follow-up question, e.g. "Which math courses have you finished?". It comes last.
+   - Even when the question asks for one fact, add the related details the sources give that \
+the student will need next (how and by when to pay, what happens on a second offence, who decides).
+   - Keep it scannable: no filler, no closing pleasantries, nothing longer than needed. When the \
+sources don't have the answer, follow rule 2: say so in one sentence and name an office only if a \
+source names it.
 10. For personal, disciplinary, harassment or safety matters, be supportive and point to the \
 right reporting channel given in the sources. If someone is in immediate danger, tell them to \
 contact emergency services or campus security first.
@@ -68,8 +92,18 @@ link. If announcements disagree, follow the newest one.
 14. A source marked LINK ONLY has only the notice's title and a short search snippet; the notice \
 itself was not read. State only what that title and snippet say. Never add details that are not \
 written there, such as dates, times, rooms, fees or deadlines; say the full notice has them and \
-give the link. If it is marked "not yet confirmed", say it was found by search and may not be on \
-the official announcements list yet."""
+give the link.
+
+COURSE ELIGIBILITY
+15. A source titled "Eligibility check ..." or "Prerequisites of ..." was computed by the app from \
+the prerequisites written in the documents it names. For questions about which courses a student \
+can take, answer from that source: keep its groups (can take now; no prerequisite listed; needs \
+the instructor's permission; not yet, with the missing courses; prerequisites written in words, \
+quoted as written), list the courses in each group, and name the document(s) it is based on. \
+Never add, drop or guess a prerequisite that the sources do not state, and do not count a course \
+as completed unless the student said so. If it says the program is unclear, ask which program the \
+student is in instead of listing courses. End by telling the student to confirm with their \
+academic advisor, because course offerings and curricula can change."""
 
 
 # The status value 'draft_not_approved' (corpus YAML, database, code) means: a draft version
@@ -151,8 +185,6 @@ def announcement_meta(c):
     out.append(f"Link: {c['url']}")
     if not c.get('full_text'):
         out.append('LINK ONLY: title and short snippet; the full notice was not read')
-    if c.get('listed') is False:
-        out.append('not yet confirmed on the official announcements list (found by search)')
     return out
 
 
@@ -163,8 +195,9 @@ def format_sources(chunks, today=None):
         meta = [f'Status: {status}']
         if c.get('approved_on'):
             meta.append(f"Approved: {c['approved_on']}")
-        if c.get('superseded_by'):
-            meta.append('Replaced (in part or whole) by: ' + ', '.join(map(str, c['superseded_by'])))
+        if c.get('superseded_by'):              # doc ids, written as names ("additional penalties policy 2026")
+            meta.append('Replaced (in part or whole) by: ' +
+                        ', '.join(str(d).replace('_', ' ') for d in c['superseded_by']))
         if c.get('doc_type') == 'announcement':
             meta += announcement_meta(c)
         text = c['text']
@@ -193,8 +226,8 @@ def build_messages(question, chunks, history=None):
         anns = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_type') == 'announcement']
         if any(c.get('added_reason') == 'latest announcements' for c in chunks):
             note += ("\nNote: the question asks for the latest notices. First list the announcement "
-                     f"sources ({', '.join(anns)}), newest first, each with its publication date and "
-                     "link. After them you may add at most 3 other notices from the other sources, "
+                     f"sources ({', '.join(anns)}), newest first, each with its title, \"Published: "
+                     "<date>\" and link. After them you may add at most 3 other notices from the other sources, "
                      "only ones whose date is written in the source, each with that date; leave out "
                      "any notice without a date.")
         elif anns:
@@ -204,6 +237,14 @@ def build_messages(question, chunks, history=None):
         if any(c.get('doc_type') == 'announcement' and not c.get('full_text') for c in chunks):
             note += ("\nNote: LINK ONLY announcements have just a title and a short snippet. Say "
                      "nothing about them beyond that text; the details are in the notice at its link.")
+        checks = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_type') == 'computed']
+        if checks:
+            note += (f"\nNote: {', '.join(checks)} is a prerequisite check computed from the documents. "
+                     "Answer from it as rule 15 says, with its groups and courses. Say which document(s) "
+                     "it is based on (for example \"according to the CSE program page\") and cite it "
+                     f"[{checks[0]}]. Then give the advice to confirm with the academic advisor. If it "
+                     "names courses the student didn't say anything about, finish with one follow-up "
+                     "question about them.")
         if any(c.get('doc_type') == 'calendar' for c in chunks):
             note += ("\nNote: calendar rows marked [past] are already over. For \"next\", "
                      "\"upcoming\" or \"this week\" questions use only rows without [past]. "

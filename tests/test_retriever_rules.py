@@ -18,17 +18,15 @@ def ann(days_old, listed=True):
 
 
 class Weights(unittest.TestCase):
-    def test_age_and_confirmation(self):
+    def test_age_only(self):
         self.assertEqual(announcement_weight(ann(0), TODAY), (1.1, False))
         self.assertEqual(announcement_weight(ann(89), TODAY), (1.1, False))
         self.assertEqual(announcement_weight(ann(90), TODAY), (0.8, False))
         self.assertEqual(announcement_weight(ann(365), TODAY), (0.8, False))
         self.assertEqual(announcement_weight(ann(366), TODAY), (1.0, True))     # like superseded
-        w, old = announcement_weight(ann(2, listed=False), TODAY)
-        self.assertAlmostEqual(w, 1.1 * 0.9)
-        self.assertFalse(old)
-        w, _ = announcement_weight(ann(120, listed=False), TODAY)
-        self.assertAlmostEqual(w, 0.8 * 0.9)
+        # however a post was found, it counts the same
+        self.assertEqual(announcement_weight(ann(2, listed=False), TODAY), (1.1, False))
+        self.assertEqual(announcement_weight(ann(120, listed=False), TODAY), (0.8, False))
         self.assertEqual(announcement_weight({'published_at': None, 'listed': True}, TODAY), (1.1, False))
 
 
@@ -56,17 +54,17 @@ class Prompt(unittest.TestCase):
         c.update(kw)
         return c
 
-    def test_link_only_provisional(self):
+    def test_link_only(self):
         meta = announcement_meta(self.chunk())
         self.assertEqual(meta[0], 'Published: 27 October 2026')
         self.assertIn('Link: https://www.bracu.ac.bd/llb-mid-term-schedule-fall-2026', meta)
         self.assertIn('LINK ONLY: title and short snippet; the full notice was not read', meta)
-        self.assertTrue(any('not yet confirmed' in m for m in meta))
+        self.assertFalse(any('confirmed' in m for m in meta))       # no confirmation step
 
     def test_found_date_and_full_text(self):
         meta = announcement_meta(self.chunk(date_source='found', full_text=True, listed=True))
         self.assertEqual(meta[0], 'Published: around 27 October 2026')
-        self.assertFalse(any('LINK ONLY' in m or 'not yet confirmed' in m for m in meta))
+        self.assertFalse(any('LINK ONLY' in m or 'confirmed' in m for m in meta))
 
     def test_corpus_sources_unchanged(self):
         c = {'title': 'Examinations Policy', 'section': 'Fines', 'status': 'current', 'text': 'x',

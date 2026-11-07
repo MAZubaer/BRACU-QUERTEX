@@ -1,7 +1,8 @@
 """Build the course catalogue: one card per course code, compiled from the corpus.
 
-    python scripts/build_course_catalog.py            # write the catalogue
-    python scripts/build_course_catalog.py --check    # parse and report only
+    python scripts/build_course_catalog.py                       # write the catalogue
+    python scripts/build_course_catalog.py --check               # parse and report only
+    python scripts/build_course_catalog.py --json-only --load-db # prerequisites for the eligibility checker
 
 Reads every document in BRACU_RAG_Corpus/ (not _duplicates*, not the catalogue
 itself), finds course definitions in all the formats the program pages use
@@ -15,7 +16,9 @@ Writes
 - BRACU_RAG_Corpus/00_START_HERE/course_catalog/<PREFIX>.md: one "## CODE — Title"
   section per course (the chunker gives each its own chunk), GENERATED: never
   edit by hand; rerun this script, then scripts/ingest.py.
-- data/course_catalog.json: code -> card.
+- data/course_catalog.json: {"courses": code -> card, "programs", "docs"}. Each prerequisite
+  has a parsed rule (parse_prereq); programs are the degree programs' documents and courses.
+- with --load-db: the same rules and programs in Postgres (course_catalog), for bracu/eligibility.py.
 
 When documents disagree nothing is picked silently: every differing title and
 credit value is kept with its source. Typos in the sources are not corrected.
@@ -26,7 +29,8 @@ import json
 import re
 import shutil
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,6 +58,8 @@ LEAD = re.compile(r'^\s*(?:#{1,6}\s*)?(?:[●•▪·◦\-–*]\s+)?(?:\d{1,3}[.
 CREDIT = re.compile(r'[(\[]?\s*[/–—-]?\s*\b(\d{1,2}(?:\.\d{1,2})?)\s*-?\s*(?:credit|cr\.?\b)s?[)\]]?', re.I)
 NUM_CELL = re.compile(r'^\(?\s*(\d{1,2}(?:\.\d{1,2})?)\s*(?:credits?)?\s*\)?$', re.I)
 PREREQ = re.compile(r'^\W*(?:pre-?\s?req(?:uisite)?s?\.?|prerequisites?)\s*\**\s*[:.]?\s*\**\s*(?P<t>.*)$', re.I)
+# at the end of a description paragraph: "... distributed logic. (Pre req. CSE 260)"
+INLINE_PREREQ = re.compile(r'\(\s*pre-?\s?req(?:uisite)?s?\.?\s*:?\s*(?P<t>(?:[^()]|\([^()]*\))+)\)', re.I)
 BOOKS = re.compile(r'^\W*(suggested\s+(?:text\s*)?books?|suggested\s+texts?|recommended\s+(?:text\s*)?books?|'
                    r'text\s*books?|reference\s*books?|text\s+and\s+reference\s+books?|suggested\s+references?|'
                    r'recommended\s+readings?|'
@@ -125,6 +131,7 @@ def clean_cat(t):
     """A category label: "## Program Core — 48 credits" -> "Program Core"."""
     t = md(t).lstrip('#').strip()
     t = re.sub(r'^course\s+level:\s*', '', t, flags=re.I)
+    t = re.sub(r'^(?:a\s+)?list\s+of\s+', '', t, flags=re.I)      # "A list of elective courses from ..."
     t = re.sub(r'\(?\s*\d+\s*courses?\s*[-–—]\s*\d+(?:\.\d)?\s*credits?\s*\)?', ' ', t, flags=re.I)
     t = re.sub(r'[-–—(]?\s*\b\d{1,3}(?:\.\d)?\s*credits?\b\)?', ' ', t, flags=re.I)
     t = re.sub(r'\s+', ' ', t).strip(' :—–-')
@@ -211,6 +218,130 @@ def prereq_info(text):
     if perm and not codes:
         shown = 'Permission of Instructor'
     return {'text': shown[:220], 'codes': codes, 'none': False, 'permission': perm}
+
+
+# ---------------------------------------------------------------- prerequisite rules
+# A rule is {"status", "all_of": [node, ...], "permission", "or_equivalent", "text"} where a
+# node is a course code ("CSE 221"), "PERMISSION", {"any_of": [...]}, {"all_of": [...]} or
+# {"text": "..."} (a condition in words). status:
+#   parsed    every part understood
+#   partial   codes understood, plus a condition in words ("PHY 112 or appropriate experience")
+#   unparsed  words qualify a code ("CSE 320 for CCNA certification") or no code at all
+#             ("All core courses"); all_of is empty, the original text is kept
+#   none      "None"
+# bracu/eligibility.py evaluates these rules.
+PERMISSION_RE = re.compile(
+    r"(?:the\s+)?(?:permission|consent|approval)\s+(?:of|from)\s+(?:the\s+)?(?:course\s+)?"
+    r"(?:instructor|teacher|supervisor|department|faculty|chair(?:person)?)|"
+    r"(?:the\s+)?instructor'?s?\s+(?:permission|consent|approval)", re.I)
+OR_EQUIVALENT = re.compile(r'\s*\(?\s*\bor\s+(?:its\s+|an?\s+)?equivalents?\b\s*\)?', re.I)
+NO_PREREQ = re.compile(r'none|nil|n/?a|-+|no\s+prerequisites?', re.I)
+CONNECTOR_TAIL = re.compile(r'(?:\s*(?:,|;|&|\.|\band\b|\bor\b))+\s*$', re.I)
+TITLE_SMALL = {'and', 'of', 'in', 'the', 'for', 'to', 'with', 'on', 'a', 'an'}
+
+
+def title_like(seg, codes, titles_of):
+    """Text right after a code that is just the course's title
+    ("ECE 203 Electrical Circuits II ECE 203L ...", "BUS524: Quantitative Techniques ...")."""
+    s = re.sub(r'^\s*[:\-–—]\s*', '', seg).strip()
+    if not s or '§' in s or re.match(r'(?:[,;&/()]|or\b|and\b)', s, re.I):
+        return False
+    n = norm_title(s)
+    for c in codes:
+        for t in titles_of(c):
+            m = norm_title(t or '')
+            if m and (n == m or n.startswith(m) or m.startswith(n)
+                      or difflib.SequenceMatcher(None, n, m).ratio() > 0.8):
+                return True
+    words = re.findall(r"[A-Za-z][A-Za-z'’\-]*|\d+", s)
+    return bool(words) and words[0][0].isupper() and all(
+        w[0].isupper() or w.lower() in TITLE_SMALL or w.isdigit() for w in words)
+
+
+def parse_prereq(text, titles_of=lambda code: ()):
+    """Prerequisite text -> rule (see above). titles_of(code) gives the known titles of a
+    course, so a title written after its code is not read as a condition."""
+    t = re.sub(r'\s+', ' ', md(text).replace('�', ' ')).strip(' .:;')
+    if t.count(')') > t.count('('):
+        t = t.rstrip(')').strip(' .')
+    if t.count('(') > t.count(')'):
+        t = t.lstrip('(').strip()
+    rule = {'status': 'parsed', 'all_of': [], 'permission': False, 'or_equivalent': False, 'text': t}
+    if not t or NO_PREREQ.fullmatch(t):
+        return {**rule, 'status': 'none', 'text': t or 'None'}
+    slots = []
+
+    def slot(node):
+        slots.append(node)
+        return f' §{len(slots) - 1} '
+
+    s = t
+    if OR_EQUIVALENT.search(s):
+        rule['or_equivalent'] = True
+        s = OR_EQUIVALENT.sub(' ', s)
+    s = PERMISSION_RE.sub(lambda m: slot('PERMISSION'), s)
+    # codes become slots; a title written after a code is dropped
+    matches = [m for m in GROUP_RE.finditer(s) if codes_in(m.group(0))]
+    out, pos = [], 0
+    for k, m in enumerate(matches):
+        codes = codes_in(m.group(0))
+        out += [s[pos:m.start()], slot(codes[0] if len(codes) == 1 else {'any_of': codes})]
+        pos = m.end()
+        seg = s[m.end():matches[k + 1].start() if k + 1 < len(matches) else len(s)]
+        tail = CONNECTOR_TAIL.search(seg)
+        body = seg[:tail.start()] if tail else seg
+        if title_like(body, codes, titles_of):
+            pos += len(body)
+    out.append(s[pos:])
+    s = ''.join(out)
+    # "MAT101/ MAT105/ MAT110": one of them
+    s = re.sub(r'§\d+(?:\s*/\s*§\d+)+',
+               lambda m: slot({'any_of': [slots[int(i)] for i in re.findall(r'§(\d+)', m.group(0))]}), s)
+    qualified = []
+
+    def atoms(a):                        # "A, B and C" / "A B" -> [A, B, C]
+        found = []
+        for x in re.split(r',|\band\b|&|\bboth\b', a):
+            x = x.strip(' ()')
+            ids = re.findall(r'§(\d+)', x)
+            words = re.findall(r'[A-Za-z]{2,}', re.sub(r'§\d+', ' ', x))
+            if ids and words:
+                qualified.append(x)
+            elif ids:
+                found += [slots[int(i)] for i in ids]
+            elif words:
+                found.append({'text': x})
+        return found
+
+    def group(items, kind='all_of'):
+        return items[0] if len(items) == 1 else {kind: items}
+
+    def alternatives(p):                 # "A or B", "A, B (or permission of instructor)"
+        m = re.search(r'\(\s*or\s+([^()]*)\)\s*$', p, re.I)
+        if m:
+            return {'any_of': [group(atoms(p[:m.start()])), *atoms(m.group(1))]}
+        alts = [group(atoms(a)) for a in re.split(r'\bor\b', p, flags=re.I) if atoms(a)]
+        return group(alts, 'any_of') if alts else None
+
+    parts = [alternatives(p) for p in re.split(r',\s*and\b|;|\.(?=\s|$)', s, flags=re.I) if p.strip()]
+    nodes = []
+    for p in parts:
+        if p is not None:
+            nodes += p['all_of'] if isinstance(p, dict) and 'all_of' in p else [p]
+
+    def walk(n):
+        yield n
+        if isinstance(n, dict) and 'text' not in n:
+            for c in next(iter(n.values())):
+                yield from walk(c)
+
+    flat = [x for n in nodes for x in walk(n)]
+    codes = [x for x in flat if isinstance(x, str) and x != 'PERMISSION']
+    texts = [x for x in flat if isinstance(x, dict) and 'text' in x]
+    rule['permission'] = 'PERMISSION' in flat
+    if qualified or not (codes or rule['permission']):
+        return {**rule, 'status': 'unparsed', 'codes': codes_in(t)}
+    return {**rule, 'status': 'partial' if texts else 'parsed', 'all_of': nodes}
 
 
 def level_of(code):
@@ -487,6 +618,11 @@ class DocParser:
                 b['books'].append(re.sub(r'^\s*(?:\d{1,2}[.)]|[●•▪·◦\-–*])\s*', '', plain)[:200])
             return
         if b['mode'] == 'desc':
+            im = INLINE_PREREQ.search(plain)
+            if im and b['prereq'] is None:
+                b['prereq'] = im.group('t')
+                plain = (plain[:im.start()] + plain[im.end():]).strip()
+                b['mode'] = 'after-prereq'
             b['paras'].append(plain)
 
 
@@ -530,13 +666,16 @@ KIND_LABEL = {'table': 'course list', 'list': 'course list', 'line': 'course lis
               'details': 'course details', 'outline': 'course outline'}
 
 
-def build(docs):
-    """docs: [(doc_id, title, doc_type, body)] -> {code: card}"""
+def build(docs, defs_by_doc=None):
+    """docs: [(doc_id, title, doc_type, body, url)] -> {code: card}.
+    defs_by_doc, if given, is filled with each document's course definitions."""
     defs, mentions, titles = [], [], {}
-    for doc_id, title, doc_type, body in docs:
+    for doc_id, title, doc_type, body, *_ in docs:
         p = DocParser(doc_id, title, doc_type).parse(body)
         for r in p.defs:
             r['rank'] = rank(r, doc_type, title)
+        if defs_by_doc is not None:
+            defs_by_doc[doc_id] = p.defs
         defs += p.defs
         mentions += p.mentions
         titles[doc_id] = (title, doc_type)
@@ -576,8 +715,15 @@ def build(docs):
             if r['prereq']:
                 info = prereq_info(r['prereq'])
                 key = info['text'].lower()
-                pre.setdefault(key, {**info, 'sources': set()})['sources'].add(titles[r['doc']][0])
-        card['prerequisites'] = [{**v, 'sources': sorted(v['sources'])} for v in pre.values()]
+                e = pre.setdefault(key, {**info, 'raw': r['prereq'], 'sources': set(), 'doc_ids': set(),
+                                         'titles': set()})
+                e['sources'].add(titles[r['doc']][0])
+                e['doc_ids'].add(r['doc'])
+                if r['title']:
+                    e['titles'].add(r['title'])
+        card['prerequisites'] = [{**v, 'sources': sorted(v['sources']), 'doc_ids': sorted(v['doc_ids']),
+                                  'titles': sorted(v['titles'])} for v in pre.values()]
+        card['_clusters'] = clusters
         card['equivalents'] = sorted({e for r in recs for e in r['equivalents'] if e != code})
         progs = defaultdict(set)
         for r in recs:
@@ -612,7 +758,124 @@ def build(docs):
         card['books'] = books[:6]
         card['sources'] = sorted({r['doc'] for r in recs} | {m['doc'] for m in mentions if m['code'] == code})
         cards[code] = card
+    add_rules(cards)
     return cards
+
+
+def known_titles(cards):
+    def titles_of(code):
+        c = cards.get(code)
+        if not c:
+            return ()
+        return [c['title'], *c['also_listed_as'], *(v['title'] for v in c['title_variants'])]
+    return titles_of
+
+
+def add_rules(cards):
+    """Each prerequisite gets its parsed rule. When one code names two different courses
+    (CSE 490 "WAN Routing and Technologies" and "Special Topics"), each prerequisite
+    also says which one it belongs to ("offering")."""
+    titles_of = known_titles(cards)
+    for card in cards.values():
+        clusters = card.pop('_clusters', [])
+
+        def cluster_of(title):
+            n = norm_title(title)
+            return next((k for k, cl in enumerate(clusters) if any(norm_title(t) == n for t, _, _ in cl)), None)
+
+        for p in card['prerequisites']:
+            p['rule'] = parse_prereq(p.pop('raw'), titles_of)
+            p['_cl'] = {cluster_of(t) for t in p['titles']} - {None}
+        if len({k for p in card['prerequisites'] for k in p['_cl']}) > 1:
+            for p in card['prerequisites']:
+                p['offering'] = best_title(clusters[min(p['_cl'])]) if p['_cl'] else None
+        for p in card['prerequisites']:
+            del p['_cl']
+
+
+# ---------------------------------------------------------------- programs (for the eligibility checker)
+PROGRAM_DOC = re.compile(r'^(?:bachelor|masters?\b|executive\s+mba|updated\s+degree\s+plan|curriculum:|'
+                         r'm\.sc|pgd|certificate\s+program)', re.I)
+PROGRAM_ALIASES = {'msc_mengg_cse_curriculum': 'MSc CSE'}     # same program as the MSc CSE page
+GRADUATE = re.compile(r'^(?:masters?\b|executive|m\.sc|pgd|curriculum:\s*m\.)', re.I)
+DEGREE_WORDS = re.compile(
+    r'^(?:bachelor|masters?)\s+(?:of\s+)?(?:science|arts|social\s+sciences?|business\s+administration)?'
+    r'\s*(?:in\s+)?', re.I)
+
+
+def program_key(doc_id, title):
+    if doc_id in PROGRAM_ALIASES:
+        return PROGRAM_ALIASES[doc_id]
+    m = re.search(r'\bB\.Sc\.\s+in\s+([A-Z]{2,5})\b', title)            # "Updated Degree Plan — B.Sc. in CSE"
+    if m:
+        return m.group(1)
+    m = re.search(r'\(([^()]+)\)\s*$', title)                            # "... Engineering (CSE)"
+    if m:
+        k = m.group(1).strip()
+        return k.split(' in ')[-1].strip() if ' in ' in k else k          # "BA in AELS" -> "AELS"
+    return None
+
+
+def program_names(title):
+    """Phrases that name the program in a question: "Computer Science & Engineering"."""
+    full = re.sub(r'\s*\([^()]*\)', '', title).strip()
+    subject = DEGREE_WORDS.sub('', full).strip()
+    return [full] + ([subject] if subject and subject != full else [])
+
+
+def build_programs(docs, defs_by_doc):
+    """{key: program}: the documents of each degree program (program page, updated degree
+    plan, curriculum) and the courses listed in them, each tagged core / elective."""
+    programs = {}
+    for doc_id, title, doc_type, _, url in docs:
+        recs = defs_by_doc.get(doc_id, [])
+        key = program_key(doc_id, title)
+        if len(recs) < 8 or not key or not (PROGRAM_DOC.match(title) or doc_id in PROGRAM_ALIASES):
+            continue
+        p = programs.setdefault(key, {'key': key, 'name': '', 'names': [], 'docs': [], 'courses': {},
+                                      'level': 'graduate' if GRADUATE.match(title) else 'undergraduate'})
+        if doc_type != 'degree_plan' and doc_id not in PROGRAM_ALIASES and not p['name']:
+            p['name'] = re.sub(r'\s*\([^()]*\)\s*$', '', title).strip()
+            p['names'] = program_names(title)
+        p['docs'].append(doc_id)
+        for r in recs:
+            tag = p['courses'].get(r['code'], '')
+            cat = (r['category'] or '').lower()
+            if 'core' in cat or 'compulsory' in cat or 'required' in cat:
+                tag = 'core'
+            elif 'elective' in cat and tag != 'core':
+                tag = 'elective'
+            p['courses'][r['code']] = tag
+    for p in programs.values():
+        p['name'] = p['name'] or p['key']
+        p['prefix'] = Counter(c.split()[0] for c in p['courses']).most_common(1)[0][0]
+        p['courses'] = dict(sorted(p['courses'].items()))
+    return dict(sorted(programs.items()))
+
+
+def doc_label(doc_id, title, doc_type, programs):
+    key = next((k for k, p in programs.items() if doc_id in p['docs']), None)
+    if key and doc_type == 'degree_plan':
+        return f'{key} degree plan'
+    if key and doc_type == 'curriculum':
+        return f'{key} curriculum'
+    return f'{key} program page' if key else title
+
+
+def eligibility_data(cards, programs, docs):
+    """What bracu/eligibility.py needs (stored in Postgres): programs, every course's title
+    and prerequisite rules, and the documents they come from."""
+    used = {d for p in programs.values() for d in p['docs']}
+    courses = {}
+    for code, c in cards.items():
+        pres = [{'text': p['rule']['text'], 'rule': p['rule'], 'docs': p['doc_ids'],
+                 **({'offering': p['offering']} if p.get('offering') else {})} for p in c['prerequisites']]
+        used |= {d for p in pres for d in p['docs']}
+        courses[code] = {'title': c['title'], 'prereqs': pres, 'equivalents': c['equivalents']}
+    meta = {d[0]: d for d in docs}
+    return {'programs': programs, 'courses': courses,
+            'docs': {d: {'title': meta[d][1], 'label': doc_label(d, meta[d][1], meta[d][2], programs),
+                         'url': meta[d][4] or ''} for d in sorted(used) if d in meta}}
 
 
 # ---------------------------------------------------------------- writing
@@ -655,6 +918,25 @@ def card_markdown(c):
     return '\n'.join(lines) + '\n'
 
 
+def write_json(cards, programs, docs):
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    meta = {d[0]: {'title': d[1], 'doc_type': d[2], 'url': d[4]} for d in docs}
+    OUT_JSON.write_text(json.dumps({'built': date.today().isoformat(), 'courses': cards, 'programs': programs,
+                                    'docs': meta}, ensure_ascii=False, indent=1), encoding='utf-8')
+
+
+def load_db(data, url=None):
+    """Store the eligibility data in Postgres (table course_catalog, key 'eligibility')."""
+    import os
+    from bracu.db import connect
+    url = url or os.environ.get('DATABASE_URL_UNPOOLED') or config.DATABASE_URL
+    with connect(url) as conn, conn.cursor() as cur:
+        cur.execute((ROOT / 'sql' / 'schema.sql').read_text(encoding='utf-8'))
+        cur.execute("""INSERT INTO course_catalog (key, value) VALUES ('eligibility', %s)
+                       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""",
+                    (json.dumps({**data, 'built': date.today().isoformat()}, ensure_ascii=False),))
+
+
 def write(cards):
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
@@ -675,8 +957,6 @@ def write(cards):
                 f'> Generated by `scripts/build_course_catalog.py` from the program pages. Do not edit by hand.\n\n')
         body = '\n'.join(card_markdown(c) for c in sorted(cs, key=lambda c: c['code']))
         (OUT_DIR / f'{prefix}.md').write_text(head + body, encoding='utf-8')
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(json.dumps(cards, ensure_ascii=False, indent=1), encoding='utf-8')
     return len(by_prefix)
 
 
@@ -689,7 +969,9 @@ def load_docs():
             continue
         meta, body = read_doc(str(f))
         if meta.get('doc_id'):
-            docs.append((meta['doc_id'], meta.get('title', ''), meta.get('doc_type', ''), body))
+            src = str(meta.get('source') or '')
+            docs.append((meta['doc_id'], meta.get('title', ''), meta.get('doc_type', ''), body,
+                         src if src.startswith('http') else ''))
     return docs
 
 
@@ -702,17 +984,39 @@ def report(cards):
           f"books {has('books')} | equivalents {has('equivalents')}")
     print(f"title variants kept: {sum(1 for c in full if c['title_variants'])} | "
           f"credit variants kept: {sum(1 for c in full if len(c['credits']) > 1)}")
+    rules = [p['rule'] for c in cards.values() for p in c['prerequisites']]
+    st = Counter(r['status'] for r in rules)
+    print(f"prerequisite rules: {len(rules)} on {has('prerequisites')} courses | parsed {st['parsed']} | "
+          f"partly {st['partial']} | not parsed {st['unparsed']} | 'None' {st['none']}")
+    for code, c in sorted(cards.items()):
+        for p in c['prerequisites']:
+            if p['rule']['status'] in ('partial', 'unparsed'):
+                print(f"  {p['rule']['status']:8s} {code}: {p['rule']['text']}")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--check', action='store_true', help='parse and report, write nothing')
+    ap.add_argument('--json-only', action='store_true',
+                    help='write data/course_catalog.json only, not the corpus .md files')
+    ap.add_argument('--load-db', action='store_true',
+                    help='also store the eligibility data in Postgres (DATABASE_URL)')
     args = ap.parse_args()
-    cards = build(load_docs())
+    docs = load_docs()
+    defs_by_doc = {}
+    cards = build(docs, defs_by_doc)
+    programs = build_programs(docs, defs_by_doc)
     report(cards)
-    if not args.check:
-        files = write(cards)
-        print(f'wrote {files} files to {OUT_DIR} and {OUT_JSON}')
+    print(f"programs: {len(programs)} ({', '.join(programs)})")
+    if args.check:
+        return
+    write_json(cards, programs, docs)
+    print(f'wrote {OUT_JSON}')
+    if not args.json_only:
+        print(f'wrote {write(cards)} files to {OUT_DIR}')
+    if args.load_db:
+        load_db(eligibility_data(cards, programs, docs))
+        print('stored the eligibility data in Postgres (course_catalog)')
 
 
 if __name__ == '__main__':

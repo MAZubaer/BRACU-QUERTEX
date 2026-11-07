@@ -59,6 +59,14 @@ CREATE TABLE IF NOT EXISTS index_info (
     value  jsonb NOT NULL
 );
 
+-- Course prerequisites and program structures for the eligibility checker
+-- (bracu/eligibility.py). Written by scripts/build_course_catalog.py --load-db
+-- from data/course_catalog.json; key 'eligibility' holds programs, courses, docs.
+CREATE TABLE IF NOT EXISTS course_catalog (
+    key    text PRIMARY KEY,
+    value  jsonb NOT NULL
+);
+
 -- BM25 statistics over ALL chunks and postings (corpus + announcements), same
 -- formula as the original Python BM25: idf = ln(1 + (n - df + 0.5) / (df + 0.5)).
 -- Called by ingest.py, sync_search.py and import_saved_pages.py after writing.

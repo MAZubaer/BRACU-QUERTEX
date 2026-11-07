@@ -189,8 +189,8 @@ class Post(unittest.TestCase):
 
     def test_full_text_entry_replaces_link_only(self):
         ann, text = imp.post_ann(self.post)
-        self.assertEqual((ann['full_text'], ann['source'], ann['rag_priority'], ann['date_source']),
-                         (True, 'inbox', 2, 'page'))
+        self.assertEqual((ann['full_text'], ann['source'], ann['rag_priority'], ann['date_source'],
+                          ann['listed']), (True, 'inbox', 2, 'page', True))
         chunks = build_chunks(ann, text)
         self.assertTrue(chunks[0]['context_text'].startswith(
             'Announcement: LLB Mid Term schedule for Fall 2026 | Published: 27 October 2026\n\n'))

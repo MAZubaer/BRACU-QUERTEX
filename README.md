@@ -93,6 +93,14 @@ This chunks the corpus, embeds the ~1,045 chunks (a few minutes on a laptop CPU)
 
 Only the corpus is replaced; announcements are never touched. It uses about 25 MB of Neon's free storage. While the transaction runs, the `TRUNCATE` locks the tables, so live questions wait a few seconds and are then answered from the new data.
 
+**Course prerequisites (eligibility checker).** Questions like "I've finished CSE 110, 111, 220 and 221. What can I take next?" are answered from a card the app computes itself, without the AI. To build its data:
+```bash
+python scripts/build_course_catalog.py --json-only --load-db
+```
+This reads every program page and degree plan in the corpus. It turns each course's prerequisite text into a rule, such as `CSE 221, and CSE 331 or permission of the instructor` → all of [CSE 221, any of [CSE 331, PERMISSION]]. It writes `data/course_catalog.json` and stores the rules and the program structures in the `course_catalog` table. Prerequisites can't always be parsed. Of the 497 in the corpus, 458 parse cleanly and 2 partly (a code plus a condition in words, e.g. "PHY 112 or appropriate experience…"). 7 can't be parsed (e.g. "CSE 320 for CCNA certification", "All core courses"), so they are shown with their original text. The other 30 say "None". (Without `--json-only` the script also writes the course catalogue pages into the corpus; that part isn't finished yet.)
+
+For each question, `bracu/eligibility.py` works out the program, either from the question ("I'm a CS student") or from the course codes (CSE codes → the CSE program). It asks the student when the program is unclear. It checks only the courses listed in that program's own documents and skips the completed ones. It sorts the courses into five groups: (a) can take now, (b) no prerequisite listed, (c) needs the instructor's permission, (d) not yet, with the missing courses, and (e) written in words, with the original text. The result is source [S1]. The answer keeps those groups, names the document, and tells the student to confirm with their advisor.
+
 ### 1.5 Run it locally
 ```bash
 uvicorn app:app --reload
@@ -106,7 +114,7 @@ python eval/evaluate.py --plan       # retrieval through the query planner, like
 python eval/evaluate.py --answers    # also checks the answers (~250k tokens; run rarely)
 python -m unittest discover -s tests # offline tests of the announcement scripts and rules (no network)
 ```
-Each mode writes its own section of `eval/report.md`, so the synonym-only and planner results sit side by side. Current results: **51/51** in both modes (MRR 0.88 free, 0.92 with the planner). The 46 original questions, including the 3 Bangla ones, must keep their hit.
+Each mode writes its own section of `eval/report.md`, so the synonym-only and planner results sit side by side. Current results: **54/54** free (MRR 0.89), including the three eligibility questions q54–q56. With the planner it was 51/51 (MRR 0.92) before those three were added. The 46 original questions, including the 3 Bangla ones, must keep their hit.
 
 ---
 
@@ -139,15 +147,14 @@ bracu.ac.bd answers automated requests with a Cloudflare challenge ("Just a mome
 | **A. Tavily search** (automatic, daily) | Title, link, a short snippet and the date of new posts, from Tavily's search index (like a search engine result) | `scripts/sync_search.py`, run by GitHub Actions. Search endpoint only: never Tavily's extract, crawl or map, never raw page content |
 | **B. Your inbox** (manual) | The announcements **listing** (the official list) or a single post's **full text** | You save the page in your browser; `scripts/import_saved_pages.py` reads the file |
 
-Each post moves through these states:
+There is no confirmation step: a post found on the university site is accepted as it is, however it was found.
 
-| State | Comes from | Search weight | On the page |
+| Kind | Comes from | Search weight | On the page |
 |---|---|---|---|
-| Provisional (`listed=false`) | Search | ×0.9, priority 3 | "link only" + "unconfirmed" tags |
-| Confirmed (`listed=true`) | A saved listing page | priority 2 | "link only" tag |
+| Link only | Search, or a saved listing page | priority 2 | "link only" tag |
 | Full text (`full_text=true`) | A saved post page | priority 2 | No tag |
 
-On top of that, announcements rank ×1.1 when under 90 days old and ×0.8 up to a year. Older ones are left out like superseded documents, unless the question is about history. For link-only posts the model may only repeat the title and snippet and must give the link; details such as times, rooms and deadlines are in the notice itself.
+The "Latest notices" panel shows the newest posts by date. Announcements rank ×1.1 when under 90 days old and ×0.8 up to a year. Older ones are left out like superseded documents, unless the question is about history. For link-only posts the model may only repeat the title and snippet and must give the link; details such as times, rooms and deadlines are in the notice itself.
 
 **Privacy:** file results (PDFs, `/sites/default/files/…`) are never stored. A search snippet that looks like a list of people (student IDs, student emails, phone numbers) is dropped, keeping only the title and link. A saved post page with more than 5 such details is kept link-only; fewer are replaced with `[removed]`.
 
@@ -175,7 +182,7 @@ The log shows every result kept or skipped and why (URLs only), and the credits 
 - **Timing:** GitHub starts scheduled runs on a best-effort basis. They're often minutes late, sometimes hours on busy days or on a new schedule's first day, and occasionally skipped. For a run right now, use **Run workflow**.
 - **Inactivity:** in a public repo, GitHub turns scheduled workflows off after 60 days without any commit. If that happens, re-enable it on the Actions page.
 
-What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings are stripped first. It drops `/news/`, `/event/`, section and listing pages, other subdomains, files, and anything dated more than 60 days ago. Dates come from Tavily, else the snippet ("Publish Date: …"), else the title, else the day it was found (shown as "around <date>").
+What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings are stripped first. It drops `/news/`, `/event/`, section and listing pages, other subdomains, files, and anything dated more than 60 days ago. Dates come from Tavily, else the snippet ("Publish Date: …"), else the title, else the day it was found (shown as "around <date>"). A later run that finds the same post with its date, or with a real snippet where there was none or only the site menu, updates the entry by itself (logged as `BETTER`). Dates from a saved page are never replaced.
 
 **Credit budget:** the free plan has 1,000 credits a month, and a basic search costs 1. A run makes at most 5 searches, so the daily sync uses about 150 a month. Dry runs and manual runs cost the same as real ones.
 
@@ -189,15 +196,15 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 3. Imported files move to `data/inbox/done/`. Files it can't use go to `data/inbox/failed/`, with a `.txt` file saying why.
 
 **A saved listing page:**
-- **Each listed post** is created or confirmed, with its exact title and Publish Date.
-- **Provisional search entries are deleted** when they fall in that page's date range but aren't on the page. The range runs from the oldest date (exclusive, because those posts may continue on the next page; inclusive on the last page) to the newest (inclusive).
+- **Each listed post** is added, or its title and date are corrected to the exact title and Publish Date.
+- **Search entries are never deleted.** Only old ones stored before the no-confirmation rule (`listed=false`) are removed when they fall in that page's date range but aren't on the page. The range runs from the oldest date (exclusive, because those posts may continue on the next page; inclusive on the last page) to the newest (inclusive).
 - **Never deleted:** full-text imports, and entries found by search after you saved the file.
 
 **A saved post page:**
 - **Its main text replaces the link-only entry.** That's the Drupal `.pane-node-body .field-item` block, with tables kept one line per row and Cloudflare-hidden emails decoded.
 - **PDF links are recorded**, never downloaded.
 
-`data/` is in `.gitignore`, so saved pages never reach GitHub. Saving the listing once a week keeps the "unconfirmed" list short.
+`data/` is in `.gitignore`, so saved pages never reach GitHub. Saving the listing now and then fixes "around <date>" dates the search never improves and adds posts the search missed.
 
 ---
 
@@ -206,7 +213,7 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | When | What to do |
 |---|---|
 | Weekly | Save the announcements listing into `data/inbox/` and run `python scripts/import_saved_pages.py`. Review 👎 answers: `SELECT * FROM feedback WHERE rating = -1 ORDER BY created_at DESC;` in Neon's SQL editor. Add failing questions to `eval/questions.jsonl`. |
-| A document changes | Update the markdown in `BRACU_RAG_Corpus/` (keep the YAML: `status`, `rag_priority`, `superseded_by`) and `00_START_HERE/current_rules_guide.md`, then run `python scripts/ingest.py` and `python eval/evaluate.py`. No redeploy needed. The ingest briefly locks the tables (see 1.4): live questions wait a few seconds. Announcements are kept. |
+| A document changes | Update the markdown in `BRACU_RAG_Corpus/` (keep the YAML: `status`, `rag_priority`, `superseded_by`) and `00_START_HERE/current_rules_guide.md`, then run `python scripts/ingest.py` and `python eval/evaluate.py`. No redeploy needed. The ingest briefly locks the tables (see 1.4): live questions wait a few seconds. Announcements are kept. If a program page or degree plan changed, also run `python scripts/build_course_catalog.py --json-only --load-db` for the prerequisites. |
 | GitHub emails "sync failed" | Open the run's log. `Tavily search failed` means a bad key or no credits left. `Database unavailable` means the `DATABASE_URL_UNPOOLED` secret is wrong or Neon is down. The log never shows the key or the database host. |
 | A model is retired | Change `LLM_CHAIN` in Vercel's environment variables and redeploy. |
 | Free limits run out | Lower `RATE_LIMIT_*`, or add a paid key for one provider. For Tavily, lower `max_searches` or run the sync less often. |
@@ -218,19 +225,21 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | `app.py` | FastAPI app: chat (Server-Sent Events), feedback, announcements, health; serves `public/` locally |
 | `bracu/retriever.py` | BM25 in SQL + pgvector, RRF fusion over all queries, status-aware ranking, announcement date weights and "latest" mode |
 | `bracu/query.py` | Query planner (one fast LLM call) and the synonym list |
+| `bracu/eligibility.py` | Prerequisite checker (no LLM): reads completed and wanted courses from the question, finds the program, and builds the "Eligibility check" source card |
 | `bracu/text.py` | Tokenizer/stemmer shared by ingest and search (re-run ingest if you change it) |
 | `bracu/embedder.py` | e5-small with onnxruntime; falls back to keyword-only search if the model is missing |
 | `bracu/llm.py`, `bracu/prompts.py`, `bracu/rag.py` | Provider fallback chain; system prompt, today's date, `[past]` marks and announcement labels; glue |
 | `bracu/config.py`, `bracu/guard.py`, `bracu/db.py` | Settings, rate limits, feedback, database connection |
 | `public/index.html` | Chat page: streaming, clickable [S1] citations, status badges, 👍/👎, glass UI, Latest notices panel. Light/dark: follows the device until someone uses the sun/moon switch in the header (remembered in that browser; Shift+click follows the device again) |
 | `public/scene3d.js` | 3D background (Three.js from jsDelivr): the 199 documents orbit a core; the passages sent to the AI fly forward in their status colour (same colours as the badges), and once the answer is done only the cited ones stay, matching the Sources list. Optional: the page works without WebGL, and shows still frames with reduced motion |
-| `sql/schema.sql` | Tables: chunks, bm25_postings, bm25_terms, index_info, announcements, feedback, rate_limits; `refresh_bm25_stats()` |
+| `sql/schema.sql` | Tables: chunks, bm25_postings, bm25_terms, index_info, course_catalog, announcements, feedback, rate_limits; `refresh_bm25_stats()` |
 | `scripts/ingest.py`, `scripts/chunker.py`, `scripts/fetch_model.py` | Build the corpus index, download the model |
+| `scripts/build_course_catalog.py` | Course cards, prerequisite rules and program structures from the program pages (`--json-only --load-db` for the eligibility checker) |
 | `scripts/sync_search.py`, `scripts/import_saved_pages.py`, `scripts/announcements_store.py` | Announcement search sync, inbox import, and the shared chunk → embed → insert code |
 | `scripts/test_tavily.py` | One-off Tavily check that saved the test fixtures (4 credits) |
 | `.github/workflows/search_sync.yml` | The daily search sync |
 | `requirements-sync.txt` | Packages for the announcement scripts only (not installed on Vercel) |
-| `eval/` | 53 test questions and the evaluation script |
+| `eval/` | 56 test questions and the evaluation script |
 | `tests/` | Offline unit tests and their fixtures (saved Tavily results with personal data redacted, a saved listing page, a Cloudflare challenge page) |
 
 ## 6. Troubleshooting

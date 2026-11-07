@@ -5,12 +5,13 @@
 
 Search mode: **hybrid**, top-k = 5
 
-- Retrieval hit@5: **51/51 (100%)**
-- MRR: 0.88
+- Retrieval hit@5: **54/54 (100%)**
+- MRR: 0.89
   - announcement: 2/2 (100%)
   - bangla: 3/3 (100%)
   - conflict: 3/3 (100%)
   - draft: 2/2 (100%)
+  - eligibility: 3/3 (100%)
   - fact: 38/38 (100%)
   - history: 1/1 (100%)
   - multi_fact: 2/2 (100%)
@@ -70,6 +71,9 @@ Search mode: **hybrid**, top-k = 5
 | q51 | fact | hit (rank 1) |  | When is the next mid term exam for CSE? | When is the next mid term exam for CSE? examination |
 | q52 | announcement | hit (rank 1) |  | What are the latest announcements? |  |
 | q53 | announcement | hit (rank 1) |  | When is the LLB mid-term for Fall 2026? |  |
+| q54 | eligibility | hit (rank 1) |  | I've finished CSE 110, 111, 220 and 221. What can I take next? |  |
+| q55 | eligibility | hit (rank 1) |  | Can I take CSE 420 if I've done CSE 221 but not CSE 331? |  |
+| q56 | eligibility | hit (rank 1) |  | What do I need before CSE 340? |  |
 <!-- /mode: synonyms -->
 
 <!-- mode: synonyms + answers -->

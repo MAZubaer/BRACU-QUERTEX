@@ -125,7 +125,7 @@ def feedback(req: FeedbackRequest):
 @app.get('/api/announcements')
 def announcements(limit: int = Query(5, ge=1, le=20)):
     """Newest BRAC University announcements for the "Latest notices" panel:
-    confirmed (listed) posts first, then provisional ones found by search."""
+    the newest posts by date, however they were found."""
     try:
         items = latest_announcements(limit)
     except Exception as e:

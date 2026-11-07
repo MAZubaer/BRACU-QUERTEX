@@ -8,8 +8,9 @@ Two kinds of page (recognised by their canonical / og:url):
 - The announcements LISTING (https://www.bracu.ac.bd/news-archive/announcements,
   any page): the authoritative list. Every post on it is created or confirmed
   as a link-only entry with its exact title and "Publish Date" (listed=true,
-  rag_priority=2). Provisional search entries in the page's date range that
-  are NOT on it are deleted (reconciliation). Full-text imports are never deleted.
+  rag_priority=2). Search entries are accepted as they are and never deleted;
+  only old ones stored before that rule (listed=false) are removed when they
+  are NOT on it (reconciliation). Full-text imports are never deleted.
 - A single POST page (a top-level slug): its main text is imported (full_text),
   replacing any link-only entry for that URL. PDF links are recorded, never
   downloaded.
@@ -315,7 +316,7 @@ def post_ann(post):
     full = bool(text)
     return dict(url=post['url'], title=post['title'], published_at=post['published_at'],
                 date_source=post['date_source'], source='inbox', full_text=full, snippet=None,
-                listed=False, note=note, rag_priority=2, pdf_links=post['pdf_links']), text
+                listed=True, note=note, rag_priority=2, pdf_links=post['pdf_links']), text
 
 
 # ---------------------------------------------------------------- running
@@ -400,7 +401,7 @@ def main():
                     if kind_ == 'confirm':
                         r = d['row']
                         extra = (f"  [{r['source']}, date {r['published_at']}->{d['published_at']} "
-                                 f"page, listed false->true, priority ->2]")
+                                 f"page, priority ->2]")
                     elif kind_ in ('keep', 'spare'):
                         extra = f"  [{d['why']}]"
                     print(f'  {kind_.upper():8s}{when!s:11s} {title[:70]}{extra}\n          {u}')

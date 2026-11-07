@@ -46,7 +46,7 @@ class Filter(unittest.TestCase):
         self.assertEqual(skipped['not a top-level post'], 1)  # /event/durga-puja-...
         for a in new:                                         # what the store gets
             self.assertEqual((a['source'], a['full_text'], a['listed'], a['rag_priority']),
-                             ('search', False, False, 3))
+                             ('search', False, True, 2))      # accepted as found
             self.assertEqual(a['note'], s.NOTE)
 
     def test_url_rules(self):
@@ -250,6 +250,60 @@ class Cleaning(unittest.TestCase):
         self.assertEqual(len(skips), 20)                # 12 hosts + 5 files + 1 news + 1 event + 1 duplicate
         self.assertIn(('skip', 'news (not an announcement)',
                        'https://www.bracu.ac.bd/news/brac-university-holds-club-fair-fall-2026'), skips)
+
+
+class LaterRunsImprove(unittest.TestCase):
+    URL = 'https://www.bracu.ac.bd/sicip-admission-test-result'
+    MENU = ('Admissions · Apply Now · Undergraduate Admission · Postgraduate Admission · '
+            'Joint PhD Admission · International Applicants · Scholarships and')
+
+    def stored(self, **kw):
+        row = {'url': self.URL, 'title': 'SICIP Admission Test Result', 'published_at': date(2026, 11, 7),
+               'date_source': 'found', 'source': 'search', 'snippet': self.MENU, 'full_text': False}
+        row.update(kw)
+        return {self.URL: row}
+
+    def test_menu_text_is_not_a_snippet(self):
+        self.assertTrue(s.is_menu(self.MENU))
+        self.assertEqual(s.clean_snippet(self.MENU), '')
+        self.assertEqual(s.clean_snippet('Class Schedule for Fall 2026. Publish Date: Saturday, October 3, '
+                                         '2026 - 10:00. Download · PDF'),
+                         'Class Schedule for Fall 2026. Publish Date: Saturday, October 3, 2026 - 10:00. '
+                         'Download · PDF')
+
+    def test_around_date_becomes_exact(self):
+        r = result(self.URL, 'SICIP Admission Test Result',
+                   'SICIP Admission Test Result. Publish Date: Thursday, November 5, 2026 - 16:00. Result')
+        found, again, _ = s.select([r], self.stored(), date(2026, 11, 8))
+        self.assertEqual(again, {self.URL})
+        [a] = found
+        self.assertEqual((a['improves'], a['published_at'], a['date_source'], a['listed'], a['rag_priority']),
+                         ('date+snippet', date(2026, 11, 5), 'snippet', True, 2))
+        self.assertTrue(a['snippet'].startswith('SICIP Admission Test Result. Publish Date'))
+
+    def test_menu_snippet_dropped_even_without_a_date(self):
+        found, _, _ = s.select([result(self.URL, 'SICIP Admission Test Result', self.MENU)],
+                               self.stored(), date(2026, 11, 8))
+        [a] = found
+        # the first-found date stays; the stored site-menu text is replaced by nothing
+        self.assertEqual((a['improves'], a['published_at'], a['date_source'], a['snippet']),
+                         ('snippet', date(2026, 11, 7), 'found', ''))
+        # once cleaned, the same result changes nothing
+        found, _, _ = s.select([result(self.URL, 'SICIP Admission Test Result', self.MENU)],
+                               self.stored(snippet=''), date(2026, 11, 8))
+        self.assertEqual(found, [])
+
+    def test_saved_page_dates_and_full_text_never_replaced(self):
+        r = result(self.URL, 'SICIP Admission Test Result',
+                   'SICIP Admission Test Result. Publish Date: Thursday, November 5, 2026 - 16:00.')
+        for kw in ({'date_source': 'page', 'snippet': 'x'}, {'source': 'inbox', 'snippet': ''},
+                   {'full_text': True, 'snippet': ''}):
+            found, again, _ = s.select([r], self.stored(**kw), date(2026, 11, 8))
+            self.assertEqual((found, again), ([], {self.URL}), kw)
+        # a date from the snippet is not replaced by one from the title
+        found, _, _ = s.select([result(self.URL, 'SICIP result 4 November 2026', 'no date here')],
+                               self.stored(date_source='snippet', snippet='real text'), date(2026, 11, 8))
+        self.assertEqual(found, [])
 
 
 class HardRules(unittest.TestCase):

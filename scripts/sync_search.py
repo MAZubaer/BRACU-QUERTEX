@@ -1,4 +1,4 @@
-"""Daily Tavily search sync: provisional, link-only announcement entries.
+"""Daily Tavily search sync: link-only announcement entries.
 
     python scripts/sync_search.py --dry-run         # what would be added (searches still cost credits)
     python scripts/sync_search.py                   # up to 5 basic searches = 5 credits
@@ -9,8 +9,13 @@ Hard rules
   answer. This script never sends a request to bracu.ac.bd, not even through
   a third party; it only stores what the search index already shows (title,
   link, snippet).
-- Results are provisional (listed=false) until a saved announcements listing
-  page confirms them (scripts/import_saved_pages.py).
+- A post found on the university site is accepted as it is (listed=true,
+  rag_priority=2): no confirmation step. A saved listing page
+  (scripts/import_saved_pages.py) can still correct its title and date.
+- When a search result has no date, the day it was found is stored and shown
+  as "around <date>". A later search that returns the same post with its date
+  (or a real snippet instead of none / site-menu text) updates the entry by
+  itself; dates from a saved page are never replaced.
 - Privacy: files (/sites/default/files, PDFs, documents) are never kept, and
   a snippet that looks like it lists people (student IDs, student emails,
   phone numbers) is dropped; only the title and link are stored.
@@ -41,7 +46,7 @@ SEARCH = dict(search_depth='basic', include_domains=['bracu.ac.bd'], max_results
               include_answer=False, include_raw_content=False, include_usage=True)
 CUTOFF_DAYS = 60
 HOST = 'www.bracu.ac.bd'
-NOTE = 'found by search, not yet confirmed on the announcements page'
+NOTE = 'found by search'
 # one-segment paths that are site sections, not posts
 SECTION_PAGES = {'about', 'academics', 'admissions', 'research', 'students', 'alumni', 'news',
                  'news-archive', 'events', 'event', 'faculty', 'department', 'departments',
@@ -55,6 +60,7 @@ BOILERPLATE = [re.compile(p, re.I) for p in (
     r'Contact Us\.?',r'Tel:\s*\+?[\d\s()-]{8,}\.?', r'Email:\s*info@bracu\.ac\.bd\.?',
     r'\.{3}\s*Read more\s*$', r'Read more\s*$')]
 DATE_SOURCE_RANK = {'search': 0, 'snippet': 1, 'title': 2, 'found': 3}
+MENU_SEP = re.compile(r'\s[·•]\s')     # "Admissions · Apply Now · Undergraduate Admission · ..."
 
 
 def safe_error(e):
@@ -72,7 +78,7 @@ def check_url(url):
     """(keep, reason) for a canonical URL (normalize_url: no query string or
     fragment; this sync never fetches URLs, so those are just stripped). Keep
     only www.bracu.ac.bd posts at a top-level slug: the announcements listing
-    links to exactly those, so every entry can later be confirmed or removed."""
+    links to exactly those, so a saved listing can match every entry."""
     p = urlsplit(url.strip())
     if p.netloc.lower() != HOST:
         return False, 'other host'
@@ -114,8 +120,15 @@ def has_personal_data(text):
     return any(p.search(text or '') for p in PERSONAL)
 
 
+def is_menu(text):
+    """Site navigation instead of the post (the index sometimes keeps the menu)."""
+    return len(MENU_SEP.findall(text or '')) >= 3
+
+
 def clean_snippet(text):
     t = re.sub(r'\s+', ' ', text or '').strip()
+    if is_menu(t):
+        return ''
     t = re.sub(r'^' + MDY + r'\s*[—–-]\s*', '', t)          # leading "Sep 30, 2026 — "
     t = re.sub(r'^\d+\s+(?:minute|hour|day|week)s?\s+ago\s*[—–-]\s*', '', t, flags=re.I)  # "2 days ago — "
     for p in BOILERPLATE:
@@ -169,13 +182,34 @@ def too_old(r, published_at, date_source, today):
     return bool(years) and max(years) < cutoff.year
 
 
+def improvement(stored, published_at, date_source, snippet):
+    """The fields a new result improves in a stored link-only search entry:
+    a real date instead of "found" (or a better kind of date), a snippet where
+    there was none or only site-menu text. Entries from saved pages (inbox,
+    full text, date 'page') are never touched. {} = nothing better."""
+    if stored.get('source') != 'search' or stored.get('full_text'):
+        return {}
+    better = {}
+    old_rank = DATE_SOURCE_RANK.get(stored.get('date_source'), -1)     # 'page' -> never replaced
+    if DATE_SOURCE_RANK[date_source] < old_rank:
+        better.update(published_at=published_at, date_source=date_source)
+    old_snippet = stored.get('snippet') or ''
+    if is_menu(old_snippet) or (snippet and not old_snippet):
+        better['snippet'] = snippet
+    return better
+
+
 def select(results, existing, today, log=None):
-    """results: Tavily result dicts (all searches). existing: set of stored URLs.
-    Returns (new announcement dicts, URLs already stored, Counter of skip reasons).
-    `log`, if given, collects ('skip', reason, url) for every skipped result and
-    ('canonical', original, url) for every URL whose query string, fragment or
-    trailing slash was stripped."""
+    """results: Tavily result dicts (all searches). existing: stored URLs, as a
+    set or as {url: stored row} (source, date_source, snippet, full_text, title,
+    published_at); with rows, a result that improves a stored search entry
+    (see improvement()) comes back in the first list with 'improves' set.
+    Returns (announcement dicts to save, URLs already stored, Counter of skip
+    reasons). `log`, if given, collects ('skip', reason, url) for every skipped
+    result and ('canonical', original, url) for every URL whose query string,
+    fragment or trailing slash was stripped."""
     best, skipped, seen_again = {}, Counter(), set()
+    rows = existing if isinstance(existing, dict) else {}
 
     def skip(why, url):
         skipped[why] += 1
@@ -195,17 +229,29 @@ def select(results, existing, today, log=None):
         if too_old(r, published_at, source, today):
             skip(f'older than {CUTOFF_DAYS} days', url)
             continue
-        if url in existing:
-            seen_again.add(url)
-            continue
         private = has_personal_data(r.get('content'))
         snippet = '' if private else clean_snippet(r.get('content'))
-        ann = dict(url=url, title=clean_title(r.get('title'), snippet), published_at=published_at,
-                   date_source=source, source='search', full_text=False, snippet=snippet,
-                   listed=False, note=NOTE, rag_priority=3, snippet_dropped=private)
+        if url in existing:
+            seen_again.add(url)
+            stored = rows.get(url)
+            better = improvement(stored, published_at, source, snippet) if stored else {}
+            if not better:
+                continue
+            ann = dict(url=url, title=stored['title'], published_at=stored['published_at'],
+                       date_source=stored['date_source'], source='search', full_text=False,
+                       snippet='' if is_menu(stored['snippet']) else (stored['snippet'] or ''),
+                       listed=True, note=NOTE, rag_priority=2, snippet_dropped=private)
+            ann.update(better)
+            ann['improves'] = '+'.join(k for k in ('date_source', 'snippet') if k in better) \
+                .replace('date_source', 'date')
+            source, snippet = ann['date_source'], ann['snippet']
+        else:
+            ann = dict(url=url, title=clean_title(r.get('title'), snippet), published_at=published_at,
+                       date_source=source, source='search', full_text=False, snippet=snippet,
+                       listed=True, note=NOTE, rag_priority=2, snippet_dropped=private)
         old = best.get(url)
-        if old is None or (DATE_SOURCE_RANK[source], -len(snippet)) < \
-                (DATE_SOURCE_RANK[old['date_source']], -len(old['snippet'])):
+        if old is None or (DATE_SOURCE_RANK.get(source, -1), -len(snippet)) < \
+                (DATE_SOURCE_RANK.get(old['date_source'], -1), -len(old['snippet'])):
             if old is not None:
                 skip('duplicate in this run', url)
             best[url] = ann
@@ -236,15 +282,17 @@ def main():
     if not key:
         sys.exit('TAVILY_API_KEY is not set (.env locally, a GitHub secret in Actions).')
     n = max(0, min(args.max_searches, 5, len(QUERIES)))
-    today = date.today()
+    today = config.today()                    # Bangladesh date (the runner's clock is UTC)
 
     conn = None
-    existing = set()
+    existing = {}
     try:
         from bracu.db import connect
         conn = connect(os.environ.get('DATABASE_URL_UNPOOLED') or config.DATABASE_URL)
         conn.autocommit = True
-        existing = {u for (u,) in conn.execute('SELECT url FROM announcements').fetchall()}
+        cols = ('url', 'title', 'published_at', 'date_source', 'source', 'snippet', 'full_text')
+        existing = {r[0]: dict(zip(cols, r)) for r in conn.execute(
+            f"SELECT {', '.join(cols)} FROM announcements").fetchall()}
     except Exception as e:
         if not args.dry_run:
             sys.exit(f'Database unavailable: {safe_error(e)}')
@@ -256,18 +304,21 @@ def main():
     except Exception as e:                 # quota, bad key, network: fail loudly (Actions emails)
         sys.exit(f'Tavily search failed: {safe_error(e)}')
     log = []
-    new, seen_again, skipped = select(results, existing, today, log)
+    found, seen_again, skipped = select(results, existing, today, log)
+    new = [a for a in found if not a.get('improves')]
+    improved = [a for a in found if a.get('improves')]
     for kind, a, b in sorted(log):                     # URLs only, never snippets
         print(f'  canonical {a}\n         -> {b}' if kind == 'canonical' else f'  skip {a:28s} {b}')
 
-    for a in sorted(new, key=lambda a: a['published_at'], reverse=True):
-        print(f"  NEW  {a['published_at']} ({a['date_source']:7s}) {a['title'][:70]}\n"
+    for a in sorted(found, key=lambda a: a['published_at'], reverse=True):
+        label = f"BETTER {a['improves']}" if a.get('improves') else 'NEW'
+        print(f"  {label}  {a['published_at']} ({a['date_source']:7s}) {a['title'][:70]}\n"
               f"       {a['url']}\n       snippet: {a['snippet'][:110] or '(none)'}")
     saved = Counter()
     if not args.dry_run:
         from announcements_store import Store
         store = Store(conn)
-        for a in new:
+        for a in found:
             saved[store.save(a, a['snippet'] or a['title'])] += 1
         if seen_again:
             conn.execute('UPDATE announcements SET last_seen = now() WHERE url = ANY(%s)',
@@ -276,11 +327,12 @@ def main():
         run = {'ran_at': datetime.now(config.DHAKA).isoformat(timespec='minutes'),
                'trigger': os.environ.get('GITHUB_EVENT_NAME', 'local'), 'searches': n,
                'credits': credits, 'results': len(results), 'new': len(new),
-               'already_stored': len(seen_again)}
+               'improved': len(improved), 'already_stored': len(seen_again)}
         conn.execute("""INSERT INTO index_info (key, value) VALUES ('search_sync', %s)
                         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""", (json.dumps(run),))
     print(f"searches {n} | credits {credits} | results {len(results)} | kept {len(new) + len(seen_again)} "
           f"| new {len(new)}{' (dry run, not saved)' if args.dry_run else ''} | already stored {len(seen_again)}"
+          f" (improved {len(improved)})"
           + (f" | saved {dict(saved)}" if saved else '')
           + f" | snippets dropped (personal data) {sum(a['snippet_dropped'] for a in new)}"
           + f" | skipped {sum(skipped.values())}: {dict(skipped)}")

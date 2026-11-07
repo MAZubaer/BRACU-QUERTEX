@@ -45,6 +45,9 @@ MAX_CONTEXT_WORDS = int(_get('MAX_CONTEXT_WORDS', '2500'))
 CANDIDATES = int(_get('CANDIDATES', '60'))       # per search method, before fusion
 TRANSLATE_QUERIES = _bool('TRANSLATE_QUERIES', 'true')   # Bangla -> add English for search
 LATEST_ANNOUNCEMENTS = int(_get('LATEST_ANNOUNCEMENTS', '8'))  # added for "latest notices" questions
+# "I've finished CSE 110 and 111, what can I take next?": a computed eligibility card
+# from the course_catalog table (bracu/eligibility.py; no LLM)
+ELIGIBILITY_CHECK = _bool('ELIGIBILITY_CHECK', 'true')
 
 DHAKA = timezone(timedelta(hours=6))             # Bangladesh time (no daylight saving)
 
@@ -75,7 +78,7 @@ LLM_CHAIN = _get(
     'groq:openai/gpt-oss-120b,groq:openai/gpt-oss-20b,gemini:gemini-3.8-flash,'
     'gemini:gemini-3.5-flash-lite,openrouter:openai/gpt-oss-120b')
 LLM_TEMPERATURE = float(_get('LLM_TEMPERATURE', '0.1'))
-LLM_MAX_TOKENS = int(_get('LLM_MAX_TOKENS', '1200'))
+LLM_MAX_TOKENS = int(_get('LLM_MAX_TOKENS', '1600'))      # answers; the planner uses its own 300
 LLM_REASONING_EFFORT = _get('LLM_REASONING_EFFORT', 'low')
 LLM_TIMEOUT = float(_get('LLM_TIMEOUT', '60'))
 

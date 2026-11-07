@@ -1,5 +1,5 @@
 # Daily announcements sync: Tavily SEARCH results (titles, links, snippets of new
-# bracu.ac.bd posts) -> provisional link-only entries in Neon. It never sends a
+# bracu.ac.bd posts) -> accepted link-only entries in Neon. It never sends a
 # request to bracu.ac.bd. Budget: at most 5 basic searches (5 credits) per run.
 #
 # Secrets (Settings -> Secrets and variables -> Actions):
