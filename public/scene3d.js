@@ -1,4 +1,4 @@
-// 3D background: the 199 corpus documents orbit a glowing "knowledge core".
+// 3D background: the 200 corpus documents orbit a glowing "knowledge core".
 // It follows the chat: searching speeds the orbit up, the passages sent to the
 // AI fly forward in their status colour (the same colours as the badges), the
 // core pulses while the answer streams in, and when it is done only the passages
@@ -11,7 +11,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 // documents in the corpus by status (BRACU_RAG_Corpus/MANIFEST.csv, duplicates removed)
-const CORPUS = { current: 188, draft_not_approved: 6, current_partially_superseded: 3,
+const CORPUS = { current: 189, draft_not_approved: 6, current_partially_superseded: 3,
                  reference_undated: 1, superseded: 1 };
 const MAX_SLOTS = 8;                       // top-k (7) + the rules guide
 const COLUMN_PX = 852;                     // chat column width in index.html (820 + gutters)
@@ -109,7 +109,7 @@ function start(canvas) {
   });
   core.add(glow, coreMesh, shell, ...rings);
 
-  // ---- the documents (one instanced mesh, 199 thin cards)
+  // ---- the documents (one instanced mesh, 200 thin cards)
   const statuses = [];
   for (const [s, n] of Object.entries(CORPUS)) for (let i = 0; i < n; i++) statuses.push(s);
   const rand = rng(7);
