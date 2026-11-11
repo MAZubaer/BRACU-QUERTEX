@@ -101,6 +101,22 @@ This reads every program page and degree plan in the corpus. It turns each cours
 
 For each question, `bracu/eligibility.py` works out the program, either from the question ("I'm a CS student") or from the course codes (CSE codes → the CSE program). It asks the student when the program is unclear. It checks only the courses listed in that program's own documents and skips the completed ones. It sorts the courses into five groups: (a) can take now, (b) no prerequisite listed, (c) needs the instructor's permission, (d) not yet, with the missing courses, and (e) written in words, with the original text. The result is source [S1]. The answer keeps those groups, names the document, and tells the student to confirm with their advisor.
 
+**Degree cost (estimate).** Questions like "What is the total expense to graduate in CSE in 4 years?" are also answered from a card the app computes itself, so the AI never guesses the number of semesters or does the arithmetic. To build its data:
+```bash
+python scripts/build_degree_costs.py --load-db
+```
+This reads the Tuition and Fees page and each bachelor's program page. It stores every number together with the sentence or table row it came from. If a page has changed and a pattern no longer matches, the script stops instead of guessing. The estimate is:
+
+| Part | Rule |
+|---|---|
+| One-time fees | Admission application fee Tk 1,500 + admission fee Tk 33,900 + library membership fee Tk 2,500 |
+| Tuition | Program credits × tuition per credit (Law Tk 8,800; Architecture Tk 8,250 lecture to Tk 8,800 studio, shown as a range because the page gives no split; others Tk 8,250) |
+| Semester fee | Semesters × the program's semester fee (Pharmacy and Law Tk 14,000, ARC and CSE Tk 12,600, others Tk 9,350) |
+| Residential Semester | RS fee Tk 88,000, once, on top of the semester fees (compulsory for every undergraduate, in the 3rd or 4th semester) |
+| Semesters | Years × semesters a year: 3 a year (Spring, Summer, Fall); Pharmacy and LLB 2 a year (8 semesters); Architecture 5 years (15 semesters). A number of years or semesters in the question replaces the program's length |
+
+Credits come from the program pages, e.g. CSE 136, EEE 136, CS 124, Pharmacy 164, Architecture 207. The LLB page states no total, so the card adds up its 8-semester plan (147 credits) and says so. The card lists what is not included: extra freshman courses, other fees, and scholarships or waivers. It only covers the 15 bachelor's programs that have a page in the corpus; for any other program no card is made. The answer gives the card's total and table unchanged. `DEGREE_COST=false` turns it off. Re-run the script after the fee page or a program page changes, and copy `data/degree_costs.json` to `tests/fixtures/` if the tests should follow.
+
 ### 1.5 Run it locally
 ```bash
 uvicorn app:app --reload
@@ -213,7 +229,7 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | When | What to do |
 |---|---|
 | Weekly | Save the announcements listing into `data/inbox/` and run `python scripts/import_saved_pages.py`. Review 👎 answers: `SELECT * FROM feedback WHERE rating = -1 ORDER BY created_at DESC;` in Neon's SQL editor. Add failing questions to `eval/questions.jsonl`. |
-| A document changes | Update the markdown in `BRACU_RAG_Corpus/` (keep the YAML: `status`, `rag_priority`, `superseded_by`) and `00_START_HERE/current_rules_guide.md`, then run `python scripts/ingest.py` and `python eval/evaluate.py`. No redeploy needed. The ingest briefly locks the tables (see 1.4): live questions wait a few seconds. Announcements are kept. If a program page or degree plan changed, also run `python scripts/build_course_catalog.py --json-only --load-db` for the prerequisites. |
+| A document changes | Update the markdown in `BRACU_RAG_Corpus/` (keep the YAML: `status`, `rag_priority`, `superseded_by`) and `00_START_HERE/current_rules_guide.md`, then run `python scripts/ingest.py` and `python eval/evaluate.py`. No redeploy needed. The ingest briefly locks the tables (see 1.4): live questions wait a few seconds. Announcements are kept. If a program page or degree plan changed, also run `python scripts/build_course_catalog.py --json-only --load-db` for the prerequisites. If the fee page or a program page changed, run `python scripts/build_degree_costs.py --load-db`. |
 | GitHub emails "sync failed" | Open the run's log. `Tavily search failed` means a bad key or no credits left. `Database unavailable` means the `DATABASE_URL_UNPOOLED` secret is wrong or Neon is down. The log never shows the key or the database host. |
 | A model is retired | Change `LLM_CHAIN` in Vercel's environment variables and redeploy. |
 | Free limits run out | Lower `RATE_LIMIT_*`, or add a paid key for one provider. For Tavily, lower `max_searches` or run the sync less often. |
@@ -226,6 +242,7 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | `bracu/retriever.py` | BM25 in SQL + pgvector, RRF fusion over all queries, status-aware ranking, announcement date weights and "latest" mode |
 | `bracu/query.py` | Query planner (one fast LLM call) and the synonym list |
 | `bracu/eligibility.py` | Prerequisite checker (no LLM): reads completed and wanted courses from the question, finds the program, and builds the "Eligibility check" source card |
+| `bracu/degree_cost.py` | Degree cost estimate (no LLM): finds the program and the years asked, and builds the "Degree cost estimate" source card |
 | `bracu/text.py` | Tokenizer/stemmer shared by ingest and search (re-run ingest if you change it) |
 | `bracu/embedder.py` | e5-small with onnxruntime; falls back to keyword-only search if the model is missing |
 | `bracu/llm.py`, `bracu/prompts.py`, `bracu/rag.py` | Provider fallback chain; system prompt, today's date, `[past]` marks and announcement labels; glue |
@@ -235,6 +252,7 @@ What it keeps: posts at a top-level `www.bracu.ac.bd/<slug>` URL. Query strings 
 | `sql/schema.sql` | Tables: chunks, bm25_postings, bm25_terms, index_info, course_catalog, announcements, feedback, rate_limits; `refresh_bm25_stats()` |
 | `scripts/ingest.py`, `scripts/chunker.py`, `scripts/fetch_model.py` | Build the corpus index, download the model |
 | `scripts/build_course_catalog.py` | Course cards, prerequisite rules and program structures from the program pages (`--json-only --load-db` for the eligibility checker) |
+| `scripts/build_degree_costs.py` | Fees, credits and program lengths for the degree cost card, each with its quote (`--load-db`) |
 | `scripts/sync_search.py`, `scripts/import_saved_pages.py`, `scripts/announcements_store.py` | Announcement search sync, inbox import, and the shared chunk → embed → insert code |
 | `scripts/test_tavily.py` | One-off Tavily check that saved the test fixtures (4 credits) |
 | `.github/workflows/search_sync.yml` | The daily search sync |

@@ -103,7 +103,17 @@ quoted as written), list the courses in each group, and name the document(s) it 
 Never add, drop or guess a prerequisite that the sources do not state, and do not count a course \
 as completed unless the student said so. If it says the program is unclear, ask which program the \
 student is in instead of listing courses. End by telling the student to confirm with their \
-academic advisor, because course offerings and curricula can change."""
+academic advisor, because course offerings and curricula can change.
+
+DEGREE COST
+16. A source titled "Degree cost estimate ..." was computed by the app from the fee table and the \
+program pages it names. For the total cost of a degree, answer from that source: give its \
+estimated total and its table row by row with the same numbers, the number of semesters it \
+counts and why, and what it does not include. Never recompute, round or change its amounts, \
+semesters or credits, and never leave out the Residential Semester (RS) fee. Say it is an \
+estimate for new local students at the current fees, which the university can change, and \
+that the Accounts Office or Registrar's Office can confirm it. If it says the program is \
+unclear, ask which undergraduate program the student means."""
 
 
 # The status value 'draft_not_approved' (corpus YAML, database, code) means: a draft version
@@ -237,7 +247,13 @@ def build_messages(question, chunks, history=None):
         if any(c.get('doc_type') == 'announcement' and not c.get('full_text') for c in chunks):
             note += ("\nNote: LINK ONLY announcements have just a title and a short snippet. Say "
                      "nothing about them beyond that text; the details are in the notice at its link.")
-        checks = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_type') == 'computed']
+        checks = [f'S{n}' for n, c in enumerate(chunks, 1)
+                  if c.get('doc_type') == 'computed' and c.get('doc_id') != 'degree_cost']
+        costs = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_id') == 'degree_cost']
+        if costs:
+            note += (f"\nNote: {', '.join(costs)} is a degree cost estimate computed from the documents. "
+                     "Answer from it as rule 16 says: its total and its table with the same numbers, "
+                     f"cited [{costs[0]}]; do not do your own arithmetic.")
         if checks:
             note += (f"\nNote: {', '.join(checks)} is a prerequisite check computed from the documents. "
                      "Answer from it as rule 15 says, with its groups and courses. Say which document(s) "

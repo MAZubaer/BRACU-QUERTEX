@@ -21,7 +21,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import timedelta
 
-from . import config, db, eligibility
+from . import config, db, degree_cost, eligibility
 from .embedder import get_embedder, to_pgvector
 from .text import tokenize
 
@@ -276,6 +276,10 @@ class Retriever:
             out.append({**rows[guide], 'score': 0.0, 'added_reason': 'rules guide'})
         # "I've finished CSE 110 and 111, what can I take next?": the computed check goes first
         card = eligibility.card_for(query) if config.ELIGIBILITY_CHECK else None
+        if card:
+            out.insert(0, card)
+        # "What will the whole CSE degree cost?": the computed estimate goes first
+        card = degree_cost.card_for(query) if config.DEGREE_COST else None
         if card:
             out.insert(0, card)
         return out

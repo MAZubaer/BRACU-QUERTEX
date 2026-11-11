@@ -6,7 +6,7 @@
 Search mode: **hybrid**, top-k = 5
 
 - Retrieval hit@5: **54/54 (100%)**
-- MRR: 0.89
+- MRR: 0.88
   - announcement: 2/2 (100%)
   - bangla: 3/3 (100%)
   - conflict: 3/3 (100%)
@@ -66,8 +66,8 @@ Search mode: **hybrid**, top-k = 5
 | q46 | bangla | hit (rank 1) |  | ক্যাম্পাসে ধূমপান করলে জরিমানা কত? |  |
 | q47 | bangla | hit (rank 1) |  | পরীক্ষা শুরুর কত মিনিট পরে পরীক্ষার হলে ঢোকা যাবে না? |  |
 | q48 | bangla | hit (rank 4) |  | সিএসই প্রোগ্রামে প্রতি ক্রেডিটের টিউশন ফি কত? |  |
-| q49 | multi_fact | hit (rank 5) |  | What is the total expense I have to pay for graduation in 4 years in CSE? | What is the total expense I have to pay for graduation in 4 years in CSE? fee tuition degree credits |
-| q50 | multi_fact | hit (rank 5) |  | How much money do I need for the whole EEE degree? | How much money do I need for the whole EEE degree? fee tuition |
+| q49 | multi_fact | hit (rank 6) |  | What is the total expense I have to pay for graduation in 4 years in CSE? | What is the total expense I have to pay for graduation in 4 years in CSE? fee tuition degree credits |
+| q50 | multi_fact | hit (rank 6) |  | How much money do I need for the whole EEE degree? | How much money do I need for the whole EEE degree? fee tuition |
 | q51 | fact | hit (rank 1) |  | When is the next mid term exam for CSE? | When is the next mid term exam for CSE? examination |
 | q52 | announcement | hit (rank 1) |  | What are the latest announcements? |  |
 | q53 | announcement | hit (rank 1) |  | When is the LLB mid-term for Fall 2026? |  |

@@ -1,0 +1,483 @@
+{
+ "built": "2026-11-11",
+ "fees": {
+  "doc_id": "web_tuition_and_fees",
+  "title": "Tuition and Fees",
+  "url": "https://www.bracu.ac.bd/admissions/tuition-and-fees",
+  "applies_to": "new undergraduate students enrolled from Spring 2025",
+  "application": {
+   "value": 1500,
+   "quote": "#### Admission Application Fee Tk. 1,500/- Non-Refundable [Through Bkash, Rocket, Nagod, Visa cards]"
+  },
+  "admission": {
+   "value": 33900,
+   "quote": "| Admission Fee | All Program | 33,900 |"
+  },
+  "library": {
+   "value": 2500,
+   "quote": "| Library Membership fee | Tk.2,500/- | Tk.2,500/- | Tk.2,500/- | Tk.2,500/- | Tk.2,500/- | One time |"
+  },
+  "rs": {
+   "value": 88000,
+   "quote": "| Residential Semester Fee | All Program | 88,000 |"
+  },
+  "per_credit": {
+   "PHR": {
+    "value": 8250,
+    "quote": "| Tuition Fee (per credit) | Pharmacy | 8,250 |"
+   },
+   "LAW": {
+    "value": 8800,
+    "quote": "| Tuition Fee (per credit) | Law | 8,800 |"
+   },
+   "ARC_STUDIO": {
+    "value": 8800,
+    "quote": "| Tuition Fee (per credit) | ARC (Studio Course Fee) | 8,800 |"
+   },
+   "ARC": {
+    "value": 8250,
+    "quote": "| Tuition Fee (per credit) | ARC (Lecture Course Fee) | 8,250 |"
+   },
+   "CSE": {
+    "value": 8250,
+    "quote": "| Tuition Fee (per credit) | CSE | 8,250 |"
+   },
+   "OTHER": {
+    "value": 8250,
+    "quote": "| Tuition Fee (per credit) | All other Program | 8,250 |"
+   }
+  },
+  "semester_fee": {
+   "PHR": {
+    "value": 14000,
+    "quote": "| Semester Fee | Pharmacy | 14,000 |"
+   },
+   "LAW": {
+    "value": 14000,
+    "quote": "| Semester Fee | Law | 14,000 |"
+   },
+   "ARC": {
+    "value": 12600,
+    "quote": "| Semester Fee | ARC | 12,600 |"
+   },
+   "CSE": {
+    "value": 12600,
+    "quote": "| Semester Fee | CSE | 12,600 |"
+   },
+   "OTHER": {
+    "value": 9350,
+    "quote": "| Semester Fee | All other Program | 9,350 |"
+   }
+  },
+  "remedial_course": {
+   "value": 24750,
+   "quote": "Any additional course up to a maximum of four (4) in total, will incur a fee of Tk. 24,750 (all program except LAW) for each subsequent course."
+  },
+  "remedial_course_law": {
+   "value": 26400,
+   "quote": "In case of LAW Tk. 26,400 will be incurred for each subsequent course."
+  },
+  "may_change": "Fees can be changed as per the decision of the university"
+ },
+ "calendar": {
+  "per_year": 3,
+  "quote": "We have 3 semesters a year: Spring, Summer and Fall.",
+  "doc": {
+   "doc_id": "web_master_of_arts_in_teaching_english_to_speakers_of_other_languages_ma_in_tesol",
+   "title": "Master of Arts in Teaching English to Speakers of Other Languages (MA in TESOL)",
+   "url": "https://www.bracu.ac.bd/avilable-program/master-arts-teaching-english-speakers-other-languages-ma-tesol"
+  }
+ },
+ "programs": {
+  "ARC": {
+   "key": "ARC",
+   "name": "Bachelor of Architecture",
+   "names": [
+    "Bachelor of Architecture",
+    "Architecture",
+    "B.Arch",
+    "BArch"
+   ],
+   "fee_group": "ARC",
+   "doc": {
+    "doc_id": "web_bachelor_of_architecture_arc",
+    "title": "Bachelor of Architecture (ARC)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-architecture-arc"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 207,
+    "how": "stated",
+    "quote": "The total credit requirement for the degree of Bachelor of Architecture is 207 credits."
+   },
+   "length": {
+    "years": 5,
+    "semesters": 15,
+    "how": "stated",
+    "quote": "Considering a reasonable and even distribution of credits, the length of study for the degree is recommended to be 5 years (15 semesters)."
+   }
+  },
+  "AELS": {
+   "key": "AELS",
+   "name": "Bachelor of Arts in Applied English Language Studies",
+   "names": [
+    "Bachelor of Arts in Applied English Language Studies",
+    "Applied English Language Studies",
+    "BA in AELS",
+    "English"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_arts_in_applied_english_language_studies_ba_in_aels",
+    "title": "Bachelor of Arts in Applied English Language Studies (BA in AELS)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-arts-applied-english-language-studies-ba-aels"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 132,
+    "how": "stated",
+    "quote": "The goal of the 4-year, 12-semester, 132-credit Bachelor of Arts in Applied English Language Studies (BA in AELS) program is to produce functional graduates and bilingual,…"
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "stated",
+    "quote": "The goal of the 4-year, 12-semester, 132-credit Bachelor of Arts in Applied English Language Studies (BA in AELS) program is to produce functional…"
+   }
+  },
+  "BDM": {
+   "key": "BDM",
+   "name": "Bachelor of Disaster Management",
+   "names": [
+    "Bachelor of Disaster Management",
+    "Disaster Management"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_disaster_management_bdm",
+    "title": "Bachelor of Disaster Management (BDM)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-disaster-management-bdm"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 141,
+    "how": "stated",
+    "quote": "Total Credits: 141 credits"
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "LLB": {
+   "key": "LLB",
+   "name": "Bachelor of Laws (LL.B. Hons.) (LLB)",
+   "names": [
+    "Bachelor of Laws",
+    "LL.B.",
+    "LL.B",
+    "Law"
+   ],
+   "fee_group": "LAW",
+   "doc": {
+    "doc_id": "web_bachelor_of_laws_ll_b_hons_llb",
+    "title": "Bachelor of Laws (LL.B. Hons.) (LLB)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-laws-llb-hons-llb"
+   },
+   "per_year": 2,
+   "credits": {
+    "value": 147,
+    "how": "plan",
+    "quote": "The 8-semester course plan on the program page lists 147 credits; the page states no total."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 8,
+    "how": "stated",
+    "quote": "The Bachelor of Laws [LL.B. Honours] degree is a four-year undergraduate program for individuals who plan on a career in the legal profession and other allied fields."
+   }
+  },
+  "PHR": {
+   "key": "PHR",
+   "name": "Bachelor of Pharmacy",
+   "names": [
+    "Bachelor of Pharmacy",
+    "B.Pharm",
+    "Pharmacy"
+   ],
+   "fee_group": "PHR",
+   "doc": {
+    "doc_id": "web_bachelor_of_pharmacy_hons_phr",
+    "title": "Bachelor of Pharmacy (Hons.) (PHR)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-pharmacy-hons-phr"
+   },
+   "per_year": 2,
+   "credits": {
+    "value": 164,
+    "how": "stated",
+    "quote": "The total credit requirement for the degree of Bachelor of Pharmacy (Hons.) is 164."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 8,
+    "how": "stated",
+    "quote": "The four-year pharmacy undergraduate program has eight semesters."
+   }
+  },
+  "CS": {
+   "key": "CS",
+   "name": "Bachelor of Science in Computer Science",
+   "names": [
+    "Bachelor of Science in Computer Science",
+    "Computer Science"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_computer_science_cs",
+    "title": "Bachelor of Science in Computer Science (CS)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-computer-science-cs"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 124,
+    "how": "stated",
+    "quote": "Students may strengthen their logical reasoning and cognitive abilities through this rigorous 124 credit program."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "CSE": {
+   "key": "CSE",
+   "name": "Bachelor of Science in Computer Science & Engineering",
+   "names": [
+    "Bachelor of Science in Computer Science & Engineering",
+    "Bachelor of Science in Computer Science and Engineering",
+    "Computer Science and Engineering",
+    "Computer Science & Engineering"
+   ],
+   "fee_group": "CSE",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_computer_science_engineering_cse",
+    "title": "Bachelor of Science in Computer Science & Engineering (CSE)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-computer-science-engineering-cse"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 136,
+    "how": "stated",
+    "quote": "This demanding 136 credit program will help students improve their cognitive talents and logical reasoning."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "EEE": {
+   "key": "EEE",
+   "name": "Bachelor of Science in Electrical and Electronic Engineering",
+   "names": [
+    "Bachelor of Science in Electrical and Electronic Engineering",
+    "Electrical and Electronic Engineering"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_electrical_and_electronic_engineering_eee",
+    "title": "Bachelor of Science in Electrical and Electronic Engineering (EEE)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-electrical-and-electronic-engineering-eee"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 136,
+    "how": "stated",
+    "quote": "The Bachelor of Electrical and Electrical Engineering (BSEEE) degree require completion of 136 credit hours in each of the three available curriculum versions."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "ECE": {
+   "key": "ECE",
+   "name": "Bachelor of Science in Electronic And Communication Engineering",
+   "names": [
+    "Bachelor of Science in Electronic and Communication Engineering",
+    "Electronic and Communication Engineering"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_science_electronic_and_communication_engineering_ece",
+    "title": "Bachelor of Science in Electronic And Communication Engineering (ECE)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-electronic-and-communication-engineering-ece"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 136,
+    "how": "stated",
+    "quote": "The Bachelor of Electronic and Communication Engineering (BSECE) degree require completion of 136 credit hours in each of the three available curriculum versions."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "MAT": {
+   "key": "MAT",
+   "name": "Bachelor of Science in Mathematics",
+   "names": [
+    "Bachelor of Science in Mathematics",
+    "Mathematics",
+    "Math"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_mathematics_mat",
+    "title": "Bachelor of Science in Mathematics (MAT)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-mathematics-mat"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 127,
+    "how": "stated",
+    "quote": "The total credit requirement for the degree of Bachelor of Science in Mathematics is 127."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "MIC": {
+   "key": "MIC",
+   "name": "Bachelor of Science in Microbiology",
+   "names": [
+    "Bachelor of Science in Microbiology",
+    "Microbiology"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_microbiology_mic",
+    "title": "Bachelor of Science in Microbiology (MIC)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-microbiology-mic"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 136,
+    "how": "stated",
+    "quote": "MNS Department started the undergraduate program ofBS in Microbiology (136 credits) in Summer 2010."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "stated",
+    "quote": "A 4-year (12 semesters) Microbiology undergraduate programme has been designed including topics of recent trends in this field with emphasis on…"
+   }
+  },
+  "PHY": {
+   "key": "PHY",
+   "name": "Bachelor of Science in Physics",
+   "names": [
+    "Bachelor of Science in Physics",
+    "Physics"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_science_physics_phy",
+    "title": "Bachelor of Science in Physics (PHY)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-physics-phy"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 132,
+    "how": "stated",
+    "quote": "The total credit requirements for the degree of Bachelor of Science in Physics is 132."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "APE": {
+   "key": "APE",
+   "name": "Bachelor of Science in Applied Physics and Electronics",
+   "names": [
+    "Bachelor of Science in Applied Physics and Electronics",
+    "Applied Physics and Electronics"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_science_in_applied_physics_and_electronics_ape",
+    "title": "Bachelor of Science in Applied Physics and Electronics (APE)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-science-applied-physics-and-electronics-ape"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 130,
+    "how": "stated",
+    "quote": "The total credit requirement for BS in APE degree is 130."
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "ECO": {
+   "key": "ECO",
+   "name": "Bachelor of Social Science in Economics",
+   "names": [
+    "Bachelor of Social Science in Economics",
+    "Economics"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_social_science_in_economics_eco",
+    "title": "Bachelor of Social Science in Economics (ECO)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-social-science-economics-eco"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 120,
+    "how": "stated",
+    "quote": "| Total | 40 | 120 |"
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  },
+  "ANT": {
+   "key": "ANT",
+   "name": "Bachelor of Social Sciences in Anthropology",
+   "names": [
+    "Bachelor of Social Sciences in Anthropology",
+    "Anthropology"
+   ],
+   "fee_group": "OTHER",
+   "doc": {
+    "doc_id": "web_bachelor_of_social_sciences_in_anthropology_ant",
+    "title": "Bachelor of Social Sciences in Anthropology (ANT)",
+    "url": "https://www.bracu.ac.bd/avilable-program/bachelor-social-sciences-anthropology-ant"
+   },
+   "per_year": 3,
+   "credits": {
+    "value": 130,
+    "how": "stated",
+    "quote": "| Total Credits | 130 |"
+   },
+   "length": {
+    "years": 4,
+    "semesters": 12,
+    "how": "standard"
+   }
+  }
+ }
+}

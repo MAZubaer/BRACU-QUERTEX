@@ -48,6 +48,9 @@ LATEST_ANNOUNCEMENTS = int(_get('LATEST_ANNOUNCEMENTS', '8'))  # added for "late
 # "I've finished CSE 110 and 111, what can I take next?": a computed eligibility card
 # from the course_catalog table (bracu/eligibility.py; no LLM)
 ELIGIBILITY_CHECK = _bool('ELIGIBILITY_CHECK', 'true')
+# "What will the whole CSE degree cost?": a computed estimate from the fee table and the
+# program pages (bracu/degree_cost.py; course_catalog key 'degree_cost'; no LLM)
+DEGREE_COST = _bool('DEGREE_COST', 'true')
 
 DHAKA = timezone(timedelta(hours=6))             # Bangladesh time (no daylight saving)
 
