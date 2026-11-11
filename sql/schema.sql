@@ -134,3 +134,37 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     updated_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (key, bucket)
 );
+
+-- Class schedules, imported from the official PDF by scripts/import_class_schedule.py.
+-- One row per meeting day. Labs are their own codes (CSE220L) with their own sections.
+-- A term is answered only while today (Asia/Dhaka) is within valid_from..valid_until.
+CREATE TABLE IF NOT EXISTS schedule_terms (
+    term         text PRIMARY KEY,              -- 'Fall 2026'
+    valid_from   date NOT NULL,
+    valid_until  date NOT NULL,
+    source_file  text NOT NULL,
+    row_count    integer NOT NULL,
+    imported_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS class_schedule (
+    id              bigserial PRIMARY KEY,
+    term            text NOT NULL,
+    sl              integer NOT NULL,           -- the PDF's SL number
+    course          text NOT NULL,              -- as in the PDF: CSE220L
+    course_norm     text NOT NULL,              -- CSE 220L
+    is_lab          boolean NOT NULL,
+    base_course     text NOT NULL,              -- CSE 220 (the lab's theory code)
+    section_number  text NOT NULL,              -- 05
+    section_tag     text,                       -- BBA, ALL, LLB, PG, online ...
+    day             text NOT NULL,              -- Sunday
+    day_order       smallint NOT NULL,          -- Saturday = 1 ... Friday = 7
+    start_time      time NOT NULL,
+    end_time        time NOT NULL,
+    room            text NOT NULL,              -- the room for this row's day
+    faculty         text,
+    source_file     text NOT NULL,
+    imported_at     timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (term, sl)
+);
+CREATE INDEX IF NOT EXISTS class_schedule_lookup_idx
+    ON class_schedule (term, base_course, section_number);

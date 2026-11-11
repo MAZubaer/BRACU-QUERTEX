@@ -4,3 +4,4 @@ PyYAML>=6.0            # scripts/chunker.py, used by scripts/announcements_store
 tavily-python>=0.8     # scripts/sync_search.py (search endpoint only)
 beautifulsoup4>=4.12   # scripts/import_saved_pages.py
 lxml>=5.0
+pdfplumber>=0.11      # scripts/import_class_schedule.py (class schedule PDF)
