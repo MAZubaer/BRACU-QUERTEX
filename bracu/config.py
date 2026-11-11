@@ -51,6 +51,9 @@ ELIGIBILITY_CHECK = _bool('ELIGIBILITY_CHECK', 'true')
 # "What will the whole CSE degree cost?": a computed estimate from the fee table and the
 # program pages (bracu/degree_cost.py; course_catalog key 'degree_cost'; no LLM)
 DEGREE_COST = _bool('DEGREE_COST', 'true')
+# "CSE220 section 5": days, times and rooms from the class_schedule table (bracu/schedule.py;
+# imported from the official PDF; no LLM; off by itself after the term's valid_until)
+CLASS_SCHEDULE = _bool('CLASS_SCHEDULE', 'true')
 
 DHAKA = timezone(timedelta(hours=6))             # Bangladesh time (no daylight saving)
 

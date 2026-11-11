@@ -645,7 +645,8 @@ function sourceCards(bubble, sources, cited, searched) {
 function feedbackRow(bubble, payload, done) {
   const row = document.createElement('div');
   row.className = 'meta';
-  const by = done.provider ? `Answered by ${done.provider} · ${done.model}` : '';
+  const by = done.provider === 'schedule' ? 'From the official class schedule (no AI)'
+    : done.provider ? `Answered by ${done.provider} · ${done.model}` : '';
   row.innerHTML = `<span>${esc(by)}</span><span class="spacer"></span>
     <button type="button" class="fb" data-r="1" aria-label="Helpful" aria-pressed="false">👍</button>
     <button type="button" class="fb" data-r="-1" aria-label="Not helpful" aria-pressed="false">👎</button>`;

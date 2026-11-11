@@ -113,7 +113,14 @@ counts and why, and what it does not include. Never recompute, round or change i
 semesters or credits, and never leave out the Residential Semester (RS) fee. Say it is an \
 estimate for new local students at the current fees, which the university can change, and \
 that the Accounts Office or Registrar's Office can confirm it. If it says the program is \
-unclear, ask which undergraduate program the student means."""
+unclear, ask which undergraduate program the student means.
+
+CLASS SCHEDULE
+17. Class days, times, rooms and faculty come only from a source titled "Class Schedule, <term> \
+(official PDF)". Copy them exactly as written there, with the section numbers and tags, and \
+cite it. Never give a class time, room or faculty from memory or from any other source; if \
+there is no such source, say the class schedule doesn't have it. If that source says the \
+schedule ended, say so and give no times."""
 
 
 # The status value 'draft_not_approved' (corpus YAML, database, code) means: a draft version
@@ -248,7 +255,12 @@ def build_messages(question, chunks, history=None):
             note += ("\nNote: LINK ONLY announcements have just a title and a short snippet. Say "
                      "nothing about them beyond that text; the details are in the notice at its link.")
         checks = [f'S{n}' for n, c in enumerate(chunks, 1)
-                  if c.get('doc_type') == 'computed' and c.get('doc_id') != 'degree_cost']
+                  if c.get('doc_type') == 'computed' and c.get('doc_id') in ('eligibility_check',)]
+        scheds = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_id') == 'class_schedule']
+        if scheds:
+            note += (f"\nNote: {scheds[0]} is the official class schedule. Give the class days, times, "
+                     f"rooms and faculty exactly as written there, cited [{scheds[0]}] (rule 17), then "
+                     "answer the rest of the question from the other sources.")
         costs = [f'S{n}' for n, c in enumerate(chunks, 1) if c.get('doc_id') == 'degree_cost']
         if costs:
             note += (f"\nNote: {', '.join(costs)} is a degree cost estimate computed from the documents. "

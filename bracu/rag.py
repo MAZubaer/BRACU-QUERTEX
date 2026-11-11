@@ -6,7 +6,7 @@ Command line (needs DATABASE_URL in .env):
 import re
 import sys
 
-from . import config, llm, query
+from . import config, llm, query, schedule
 from .prompts import build_messages, STATUS_LABEL
 from .retriever import Retriever
 
@@ -68,11 +68,19 @@ def plan_search(question, history=None, use_planner=True, translate=True):
 
 
 def ask(question, history=None, k=None, include_history=None, retriever=None):
-    """Returns (stream, sources, info). Iterate `stream` to get the answer text."""
+    """Returns (stream, sources, info). Iterate `stream` to get the answer text.
+    A pure class-schedule question ("CSE220 section 5") is answered from the schedule
+    table with a fixed template: no planner, no search, no LLM call."""
+    sched = schedule.lookup(question, history)
+    if sched and sched['pure']:
+        info = {'search': [], 'planner': None, 'provider': 'schedule', 'model': None}
+        return iter([sched['text']]), [sched['card']], info
     r = retriever or get_retriever()
     s = plan_search(question, history)
     sources = r.search(s['main'], k=k or s['k'], include_history=include_history,
                        history_text=s['history_text'], extra_queries=s['extra'])
+    if sched:                                   # schedule + something else: the card goes first
+        sources.insert(0, sched['card'])
     messages = build_messages(question, sources, history)
     info = {'search': s['search'], 'planner': s['planner']}
     return llm.stream_chat(messages, info), sources, info
