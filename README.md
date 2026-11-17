@@ -16,7 +16,7 @@ This is the web version of the original Streamlit prototype:
 | API + chat page | FastAPI on Vercel (Hobby) | Free |
 | Database, vector search, keyword search | Neon Postgres + pgvector | Free plan |
 | Question embeddings | multilingual-e5-small, quantized ONNX (no PyTorch) | Free |
-| Answers | Groq → Gemini → OpenRouter fallback chain | Free tiers (OpenRouter's gpt-oss, the last resort, costs a fraction of a cent per answer) |
+| Answers | Groq → Cloudflare Workers AI → Gemini → OpenRouter fallback chain | Free tiers (OpenRouter's gpt-oss, the last resort, costs a fraction of a cent per answer) |
 | Rate limits + 👍/👎 feedback | Same Neon database | Free |
 | Announcements | Tavily search (daily, GitHub Actions) + pages you save in your browser | Free (Tavily: 1,000 credits a month) |
 
@@ -138,7 +138,7 @@ Each mode writes its own section of `eval/report.md`, so the synonym-only and pl
 
 1. Push the folder to GitHub. Commit `model/`, but make sure `.env` is **not** in the repository (`.gitignore` covers it).
 2. Go to <https://vercel.com>, choose **Add New → Project**, and import the repository. Vercel detects FastAPI from `app.py`, so leave the build settings empty.
-3. **Environment variables** (Settings → Environment Variables): `DATABASE_URL` (pooled), `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `IP_HASH_SALT` (any random text), and any setting from `.env.example` you changed. Vercel needs neither `TAVILY_API_KEY` nor the unpooled URL: the live site only reads the database.
+3. **Environment variables** (Settings → Environment Variables): `DATABASE_URL` (pooled), `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, `IP_HASH_SALT` (any random text), and any setting from `.env.example` you changed. Vercel needs neither `TAVILY_API_KEY` nor the unpooled URL: the live site only reads the database.
    - Alternative: add Neon from Vercel's **Storage / Marketplace** tab. It fills in `DATABASE_URL` for you. Then point your local `.env` at that database and run `ingest.py` against it.
 4. Click **Deploy**, then open `https://<project>.vercel.app/api/health`. Expect `"ok": true`, the chunk count (about 1,045 corpus chunks plus the announcements) and `"embedder": "loaded"` after the first question. `/api/announcements` lists the newest notices.
 5. **Web Analytics:** in the Vercel project, open the **Analytics** tab and click **Enable**. The page already loads Vercel's script (`/_vercel/insights/script.js`, skipped on localhost). It counts page views, visitors, referrers, countries and devices, anonymously and without cookies. Data shows up after the next deploy and a few visits. The free Hobby plan includes page views; custom events need a paid plan.

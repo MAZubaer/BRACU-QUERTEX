@@ -20,6 +20,10 @@ PROVIDERS = {   # name: (chat-completions URL, function returning the API key)
     'github': ('https://models.github.ai/inference/chat/completions', lambda: config.GITHUB_TOKEN),
     'mistral': ('https://api.mistral.ai/v1/chat/completions', lambda: config.MISTRAL_API_KEY),
     'cerebras': ('https://api.cerebras.ai/v1/chat/completions', lambda: config.CEREBRAS_API_KEY),
+    # Workers AI: the URL contains the account ID; skipped unless both values are set
+    'cloudflare': (f'https://api.cloudflare.com/client/v4/accounts/{config.CLOUDFLARE_ACCOUNT_ID}'
+                   '/ai/v1/chat/completions',
+                   lambda: config.CLOUDFLARE_API_TOKEN if config.CLOUDFLARE_ACCOUNT_ID else ''),
 }
  
  

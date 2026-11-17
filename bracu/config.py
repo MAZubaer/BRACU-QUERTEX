@@ -77,16 +77,20 @@ OPENROUTER_API_KEY = _get('OPENROUTER_API_KEY')
 GITHUB_TOKEN = _get('GITHUB_TOKEN')
 MISTRAL_API_KEY = _get('MISTRAL_API_KEY')
 CEREBRAS_API_KEY = _get('CEREBRAS_API_KEY')
+# Cloudflare Workers AI (free: 10,000 neurons a day): an account API token with
+# Workers AI Read + Edit (starts with cfut_ or cfat_, never the Global API Key) + the account ID
+CLOUDFLARE_API_TOKEN = _get('CLOUDFLARE_API_TOKEN')
+CLOUDFLARE_ACCOUNT_ID = _get('CLOUDFLARE_ACCOUNT_ID')
 
 # provider:model, tried left to right; entries without a key are skipped.
 LLM_CHAIN = _get(
     'LLM_CHAIN',
-    'groq:openai/gpt-oss-120b,groq:openai/gpt-oss-20b,gemini:gemini-3.8-flash,'
-    'gemini:gemini-3.5-flash-lite,openrouter:openai/gpt-oss-120b')
+    'groq:openai/gpt-oss-120b,cloudflare:@cf/openai/gpt-oss-120b,groq:openai/gpt-oss-20b,'
+    'gemini:gemini-3.5-flash-lite,gemini:gemini-3.1-flash-lite,openrouter:openai/gpt-oss-120b')
 LLM_TEMPERATURE = float(_get('LLM_TEMPERATURE', '0.1'))
 LLM_MAX_TOKENS = int(_get('LLM_MAX_TOKENS', '1600'))      # answers; the planner uses its own 300
 LLM_REASONING_EFFORT = _get('LLM_REASONING_EFFORT', 'low')
-LLM_TIMEOUT = float(_get('LLM_TIMEOUT', '60'))
+LLM_TIMEOUT = float(_get('LLM_TIMEOUT', '25'))  # seconds without a reply before the next provider
 
 # ---- public API guardrails ---------------------------------------------
 MAX_QUESTION_CHARS = int(_get('MAX_QUESTION_CHARS', '500'))
