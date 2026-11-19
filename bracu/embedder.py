@@ -8,6 +8,13 @@ Files in model/ (created by scripts/fetch_model.py):
 E5 needs "query: " / "passage: " prefixes, mean pooling and L2 normalisation.
 Questions and passages must be embedded by THIS class, so ingest.py and the
 API produce comparable vectors.
+
+The model reads at most 512 tokens. A longer passage (tables full of course codes
+often are) is cut into windows that each fit, with its "Document: ... | Section:
+..." header repeated, and the window vectors are averaged. Without this, the end
+of a long passage was never embedded (e.g. the CST row of a degree plan's GenEd
+table). A passage that fits gets exactly the same vector as before. Questions are
+short and are embedded in one piece.
 """
 import threading
 from pathlib import Path
@@ -39,6 +46,8 @@ class Embedder:
         model_dir = Path(model_dir or config.MODEL_DIR)
         self.tok = Tokenizer.from_file(str(model_dir / 'tokenizer.json'))
         self.tok.enable_truncation(max_length=max_length)
+        self._counter = Tokenizer.from_file(str(model_dir / 'tokenizer.json'))  # no truncation
+        self.max_length = max_length
         pad_id = self.tok.token_to_id('<pad>')
         self.tok.enable_padding(pad_id=1 if pad_id is None else pad_id, pad_token='<pad>')
 
@@ -52,7 +61,73 @@ class Embedder:
         self.dim = config.EMBED_DIM
         self.name = config.EMBED_MODEL
 
+    def _tokens(self, text):
+        return len(self._counter.encode(text, add_special_tokens=False).ids)
+
+    def windows(self, text, kind='passage'):
+        """`text` as pieces that each fit the model's window (whole lines; a very long
+        line is split between words). The "Document: ..." header, if any, starts
+        every piece. A text that fits is returned as it is, in one piece."""
+        limit = self.max_length - 16                    # room for special tokens
+        prefix = f'{kind}: '
+        if self._tokens(prefix + text) <= limit:
+            return [text]
+        header, body = '', text
+        if text.startswith('Document:') and '\n\n' in text:
+            header, body = text.split('\n\n', 1)
+            header += '\n\n'
+        room = max(limit - self._tokens(prefix + header), 64)
+
+        def units():
+            for line in body.split('\n'):
+                n = self._tokens(line)
+                if n <= room:
+                    yield line, n
+                    continue
+                part, part_n = [], 0
+                for word in line.split(' '):
+                    wn = self._tokens(word) + 1
+                    if part and part_n + wn > room:
+                        yield ' '.join(part), part_n
+                        part, part_n = [], 0
+                    part.append(word)
+                    part_n += wn
+                if part:
+                    yield ' '.join(part), part_n
+
+        pieces, cur, cur_n = [], [], 0
+        for line, n in units():
+            if cur and cur_n + n + 1 > room:
+                pieces.append('\n'.join(cur))
+                cur, cur_n = [], 0
+            cur.append(line)
+            cur_n += n + 1
+        if cur:
+            pieces.append('\n'.join(cur))
+        pieces = [header + p for p in pieces if p.strip()]
+        return pieces or [text]
+
     def encode(self, texts, kind='passage', batch_size=16):
+        """One L2-normalised vector per text. Passages longer than the model's window:
+        the mean of their windows' vectors (see windows()), normalised again."""
+        if kind != 'passage':
+            return self._encode(list(texts), kind, batch_size)
+        owner, flat = [], []
+        for i, t in enumerate(texts):
+            for w in self.windows(t, kind):
+                owner.append(i)
+                flat.append(w)
+        vecs = self._encode(flat, kind, batch_size)
+        if len(flat) == len(texts):                     # every text fitted: as before
+            return vecs
+        out = np.zeros((len(texts), vecs.shape[1]), np.float32)
+        np.add.at(out, owner, vecs)
+        counts = np.bincount(owner, minlength=len(texts))
+        multi = counts > 1
+        out[multi] /= np.linalg.norm(out[multi], axis=1, keepdims=True).clip(1e-12)
+        return out
+
+    def _encode(self, texts, kind, batch_size):
         out = []
         for start in range(0, len(texts), batch_size):
             batch = [f'{kind}: {t}' for t in texts[start:start + batch_size]]

@@ -554,6 +554,18 @@ function esc(s) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Citations: [S2], 【S2】, and ranges/lists like [S1-S4] or [S1, S3] (one button per source).
+// Same rules as cited_numbers() in bracu/rag.py, which decides the Sources list.
+const CITE_GROUP = /[\[【]\s*(S\s*\d+(?:\s*(?:[-–—,]|and)\s*S?\s*\d+)*)\s*[\]】]/gi;
+function citationNumbers(group) {
+  const out = [];
+  for (const m of group.matchAll(/(\d+)(?:\s*[-–—]\s*S?\s*(\d+))?/gi)) {
+    const a = +m[1], b = m[2] ? +m[2] : a;
+    if (b >= a && b - a <= 20) { for (let n = a; n <= b; n++) out.push(n); } else out.push(a, b);
+  }
+  return [...new Set(out)];
+}
+
 // Small, safe markdown: escape first, then add a few formats.
 function inline(s) {
   return s
@@ -561,7 +573,8 @@ function inline(s) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/[\[【]\s*S(\d+)\s*[\]】]/g, '<button type="button" class="cite" data-n="$1">S$1</button>');
+    .replace(CITE_GROUP, (_, g) => citationNumbers(g)
+      .map((n) => `<button type="button" class="cite" data-n="${n}">S${n}</button>`).join(''));
 }
 function markdown(src) {
   const lines = esc(src).split('\n');

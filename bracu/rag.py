@@ -86,9 +86,26 @@ def ask(question, history=None, k=None, include_history=None, retriever=None):
     return llm.stream_chat(messages, info), sources, info
 
 
+# One citation group: [S2], [ S2 ], 【S2】, and also ranges and lists the model sometimes
+# writes despite the prompt: [S1-S4], [S1–4], [S1, S2], [S1, S3-S5], [S1 and S2].
+# public/index.html renders citations with the same rules.
+CITE_GROUP = re.compile(r'[\[【]\s*(S\s*\d+(?:\s*(?:[-–—,]|and)\s*S?\s*\d+)*)\s*[\]】]', re.I)
+CITE_PART = re.compile(r'(\d+)(?:\s*[-–—]\s*S?\s*(\d+))?', re.I)
+MAX_RANGE = 20                                   # a longer "range" is a typo: keep its two ends
+
+
+def citation_numbers(group):
+    """'S1-S4' -> [1, 2, 3, 4]; 'S1, S3' -> [1, 3] (in order, no repeats)."""
+    out = []
+    for a, b in CITE_PART.findall(group):
+        a, b = int(a), int(b or a)
+        out += list(range(a, b + 1)) if 0 <= b - a <= MAX_RANGE else [a, b]
+    return list(dict.fromkeys(out))
+
+
 def cited_numbers(answer):
-    # gpt-oss sometimes writes full-width brackets (【S1】) or spaces inside them ([ S1 ])
-    return sorted({int(n) for n in re.findall(r'[\[【]\s*S(\d+)\s*[\]】]', answer)})
+    """Source numbers the answer cites, sorted ([S1-S3] counts S1, S2 and S3)."""
+    return sorted({n for g in CITE_GROUP.findall(answer) for n in citation_numbers(g)})
 
 
 def plain_excerpt(text, limit=400):

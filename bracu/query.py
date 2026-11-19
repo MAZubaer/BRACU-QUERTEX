@@ -35,6 +35,13 @@ and names (CSE, EEE, BBA, LLB, SHEBREC) exactly. Example: "total cost to graduat
 ["CSE tuition fee per credit", "total credits required for BSc CSE", "CSE semester fee", \
 "residential semester fee"]. A simple question needs only one query.
 
+If the question asks whether a course or course type is mandatory, required or compulsory for a \
+program, or which courses a program requires, add a query for that program's degree plan and \
+one for the university-wide General Education requirements. Example: "Is CST mandatory for \
+CSE?" -> ["CSE degree plan University Core General Education", "GenEd Stream 5 Communities \
+Seeking Transformation CST requirement"]. CST means Communities, Seeking Transformation \
+(GenEd Stream 5); GenEd is also called the University Core.
+
 Never answer the question yourself and never invent facts or numbers."""
 
 # student words -> words the documents use
@@ -54,6 +61,10 @@ SYNONYMS = [
     (('doctor', 'sick', 'medical'), 'medical center'),
     (('harass', 'bully'), 'harassment'),
     (('late', 'attendance', 'absent'), 'attendance'),
+    # CST courses are GenEd Stream 5; degree plans call GenEd the "University Core"
+    (('cst', 'communities seeking transformation', 'communities, seeking transformation',
+      'stream 5', 'gened', 'gen ed', 'general education', 'university core'),
+     'CST Communities Seeking Transformation stream general education university core'),
 ]
 
 

@@ -130,7 +130,7 @@ python eval/evaluate.py --plan       # retrieval through the query planner, like
 python eval/evaluate.py --answers    # also checks the answers (~250k tokens; run rarely)
 python -m unittest discover -s tests # offline tests of the announcement scripts and rules (no network)
 ```
-Each mode writes its own section of `eval/report.md`, so the synonym-only and planner results sit side by side. Current results: **54/54** free (MRR 0.89), including the three eligibility questions q54–q56. With the planner it was 51/51 (MRR 0.92) before those three were added. The 46 original questions, including the 3 Bangla ones, must keep their hit.
+Each mode writes its own section of `eval/report.md`, so the synonym-only and planner results sit side by side. Current results: **57/57** free (MRR 0.90), including the three eligibility questions q54–q56 and the CST/GenEd requirement questions q57–q59. With the planner it was 51/51 (MRR 0.92) before those three were added. The 46 original questions, including the 3 Bangla ones, and q57–q59 must keep their hit.
 
 ---
 

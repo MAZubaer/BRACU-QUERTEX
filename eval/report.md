@@ -5,8 +5,8 @@
 
 Search mode: **hybrid**, top-k = 5
 
-- Retrieval hit@5: **54/54 (100%)**
-- MRR: 0.88
+- Retrieval hit@5: **57/57 (100%)**
+- MRR: 0.90
   - announcement: 2/2 (100%)
   - bangla: 3/3 (100%)
   - conflict: 3/3 (100%)
@@ -15,6 +15,7 @@ Search mode: **hybrid**, top-k = 5
   - fact: 38/38 (100%)
   - history: 1/1 (100%)
   - multi_fact: 2/2 (100%)
+  - requirement: 3/3 (100%)
 
 | id | type | retrieval | answer | question | also searched |
 |---|---|---|---|---|---|
@@ -24,7 +25,7 @@ Search mode: **hybrid**, top-k = 5
 | q04 | fact | hit (rank 1) |  | Within how many days must a disciplinary fine be paid? | Within how many days must a disciplinary fine be paid? penalty |
 | q05 | fact | hit (rank 1) |  | How long do I have to appeal a non-academic disciplinary decision, and to whom? |  |
 | q06 | fact | hit (rank 1) |  | How long are disciplinary records kept on a student's file? |  |
-| q07 | fact | hit (rank 4) |  | What are the penalty levels for non-academic misconduct? | What are the penalty levels for non-academic misconduct? fine |
+| q07 | fact | hit (rank 3) |  | What are the penalty levels for non-academic misconduct? | What are the penalty levels for non-academic misconduct? fine |
 | q08 | fact | hit (rank 1) |  | How do I report sexual harassment and within what time? |  |
 | q09 | fact | hit (rank 1) |  | How many members does SHEBREC have and who chairs it? |  |
 | q10 | fact | hit (rank 1) |  | How long should a SHEBREC harassment case take to complete? |  |
@@ -44,7 +45,7 @@ Search mode: **hybrid**, top-k = 5
 | q24 | fact | hit (rank 1) |  | What clothes are not allowed under the dress code? |  |
 | q25 | fact | hit (rank 1) |  | What is the tuition fee per credit for CSE? |  |
 | q26 | fact | hit (rank 1) |  | How much is the admission fee for undergraduate students? | How much is the admission fee for undergraduate students? tuition |
-| q27 | fact | hit (rank 2) |  | How much is the Residential Semester fee? | How much is the Residential Semester fee? tuition |
+| q27 | fact | hit (rank 1) |  | How much is the Residential Semester fee? | How much is the Residential Semester fee? tuition |
 | q28 | fact | hit (rank 1) |  | How can I pay my tuition fees? |  |
 | q29 | fact | hit (rank 2) |  | Can I pay my semester fees by cheque? |  |
 | q30 | fact | hit (rank 1) |  | What is the university bus fare for one trip? | What is the university bus fare for one trip? transport |
@@ -53,7 +54,7 @@ Search mode: **hybrid**, top-k = 5
 | q33 | fact | hit (rank 1) |  | What time does the RS dormitory gate close at night? |  |
 | q34 | fact | hit (rank 1) |  | When do Fall 2026 classes begin? |  |
 | q35 | fact | hit (rank 1) |  | When are the Fall 2026 mid-term exams? | When are the Fall 2026 mid-term exams? examination |
-| q36 | fact | hit (rank 2) |  | How many credits are needed for the B.Sc. in CSE? |  |
+| q36 | fact | hit (rank 3) |  | How many credits are needed for the B.Sc. in CSE? |  |
 | q37 | fact | hit (rank 1) |  | What minimum GPA in SSC and HSC do I need for undergraduate admission? | What minimum GPA in SSC and HSC do I need for undergraduate admission? grading cgpa |
 | q38 | draft | hit (rank 1) |  | What support does the university provide for students with disabilities? |  |
 | q39 | draft | hit (rank 1) |  | Does BRAC University have a gender policy? |  |
@@ -65,8 +66,8 @@ Search mode: **hybrid**, top-k = 5
 | q45 | not_found | n/a |  | Who won the inter-university football tournament in 2025? |  |
 | q46 | bangla | hit (rank 1) |  | ক্যাম্পাসে ধূমপান করলে জরিমানা কত? |  |
 | q47 | bangla | hit (rank 1) |  | পরীক্ষা শুরুর কত মিনিট পরে পরীক্ষার হলে ঢোকা যাবে না? |  |
-| q48 | bangla | hit (rank 4) |  | সিএসই প্রোগ্রামে প্রতি ক্রেডিটের টিউশন ফি কত? |  |
-| q49 | multi_fact | hit (rank 6) |  | What is the total expense I have to pay for graduation in 4 years in CSE? | What is the total expense I have to pay for graduation in 4 years in CSE? fee tuition degree credits |
+| q48 | bangla | hit (rank 3) |  | সিএসই প্রোগ্রামে প্রতি ক্রেডিটের টিউশন ফি কত? |  |
+| q49 | multi_fact | hit (rank 5) |  | What is the total expense I have to pay for graduation in 4 years in CSE? | What is the total expense I have to pay for graduation in 4 years in CSE? fee tuition degree credits |
 | q50 | multi_fact | hit (rank 6) |  | How much money do I need for the whole EEE degree? | How much money do I need for the whole EEE degree? fee tuition |
 | q51 | fact | hit (rank 1) |  | When is the next mid term exam for CSE? | When is the next mid term exam for CSE? examination |
 | q52 | announcement | hit (rank 1) |  | What are the latest announcements? |  |
@@ -74,6 +75,9 @@ Search mode: **hybrid**, top-k = 5
 | q54 | eligibility | hit (rank 1) |  | I've finished CSE 110, 111, 220 and 221. What can I take next? |  |
 | q55 | eligibility | hit (rank 1) |  | Can I take CSE 420 if I've done CSE 221 but not CSE 331? |  |
 | q56 | eligibility | hit (rank 1) |  | What do I need before CSE 340? |  |
+| q57 | requirement | hit (rank 1) |  | Is CST mandatory for CSE? | Is CST mandatory for CSE? Communities Seeking Transformation stream general education university core |
+| q58 | requirement | hit (rank 1) |  | Do I need to take a CST course for my CSE degree? | Do I need to take a CST course for my CSE degree? Communities Seeking Transformation stream general education university core |
+| q59 | requirement | hit (rank 1) |  | Which GenEd courses are mandatory for CSE? | Which GenEd courses are mandatory for CSE? CST Communities Seeking Transformation stream general education university core |
 <!-- /mode: synonyms -->
 
 <!-- mode: synonyms + answers -->
